@@ -50,4 +50,4 @@ The Sysadmin Assistant is a utility designed to enhance the efficiency of Linux 
 
 ---
 
-Feel free to contribute to this project by creating pull requests or reporting issues.
+Feel free to contribute to my project by creating pull requests or reporting issues
