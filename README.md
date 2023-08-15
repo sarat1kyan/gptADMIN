@@ -63,4 +63,8 @@ Our installation script supports a range of popular package managers:
 
 ## ✨ Contribute
 
+There may be and would be false positives or false negatives
+so be careful and do not use this tool on production automation.
+But this tool may help to decrease the time spent on production 
+
 Feel free to contribute by creating pull requests or reporting issues.
