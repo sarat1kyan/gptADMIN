@@ -25,8 +25,8 @@ Get started quickly:
 1. Clone this repository to your local machine.
 2. Run the setup script to install necessary dependencies and configure your API key:
     ```bash
-    chmod +x setup_and_run.sh
-    ./setup_and_run.sh
+    chmod +x gptADMIN.sh
+    ./gptADMIN.sh
     ```
 3. The setup script will prompt you to enter your OpenAI API key. Make sure to have an OpenAI account and generate an API key.
 
@@ -34,7 +34,7 @@ Get started quickly:
 
 1. Once setup is complete, run the main script using:
     ```bash
-    python3 sysadmin_assistant.py
+    python3 gptADMIN.py
     ```
 2. The script will proactively monitor system logs for errors.
 3. When an error is detected, initiate a ChatGPT session for in-depth troubleshooting.
