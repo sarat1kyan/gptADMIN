@@ -49,7 +49,7 @@ Get started quickly:
 
 ## 🌐 Supported Distributions
 
-Our installation script supports a range of popular package managers:
+Installation script supports a range of popular package managers:
 - apt-get (Debian/Ubuntu)
 - dnf/yum (Fedora/RHEL/CentOS)
 - zypper (openSUSE)
