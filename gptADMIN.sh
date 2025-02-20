@@ -1,12 +1,17 @@
 #!/bin/bash
 
-# Check if running as root
+GREEN="\e[32m"
+RED="\e[31m"
+YELLOW="\e[33m"
+CYAN="\e[36m"
+BOLD="\e[1m"
+RESET="\e[0m"
+
 if [ "$EUID" -ne 0 ]; then
-    echo "You need to run this script as root."
+    echo -e "${RED}${BOLD}[ERROR] You need to run this script as root.${RESET}"
     exit 1
 fi
 
-# Determine the package manager
 if [ -x "$(command -v apt-get)" ]; then
     package_manager="apt-get"
 elif [ -x "$(command -v dnf)" ]; then
@@ -28,16 +33,16 @@ elif [ -x "$(command -v pisi)" ]; then
 elif [ -x "$(command -v swupd)" ]; then
     package_manager="swupd"
 else
-    echo "Unsupported package manager. Please install required packages manually."
+    echo -e "${RED}[ERROR] Unsupported package manager or Linux distribution. Please install required packages manually.${RESET}"
     exit 1
 fi
 
-# Install required packages
-echo "Installing required packages..."
+echo -e "${CYAN}Detected package manager: ${BOLD}${package_manager}${RESET}"
+
+echo -e "${YELLOW}[INFO] Installing required packages...${RESET}"
 case $package_manager in
     "apt-get")
-        sudo $package_manager update
-        sudo $package_manager install -y python3 python3-pip
+        sudo $package_manager update -y && sudo $package_manager install -y python3 python3-pip
         ;;
     "dnf" | "yum")
         sudo $package_manager install -y python3 python3-pip
@@ -46,7 +51,7 @@ case $package_manager in
         sudo $package_manager install -y python3 python3-pip
         ;;
     "pacman")
-        sudo $package_manager -Syu python python-pip
+        sudo $package_manager -Syu --noconfirm python python-pip
         ;;
     "apk")
         sudo $package_manager add python3 py3-pip
@@ -65,13 +70,18 @@ case $package_manager in
         ;;
 esac
 
-# Install Python packages
-echo "Installing Python packages..."
-pip3 install openai os re time platform
+echo -e "${GREEN}[SUCCESS] Required system packages installed.${RESET}"
 
-# Prompt user for OpenAI API key
+echo -e "${YELLOW}[INFO] Installing Python libraries...${RESET}"
+pip3 install --quiet openai requests psutil notify2 rich
+
+echo -e "${GREEN}[SUCCESS] Python libraries installed.${RESET}"
+
 read -p "Enter your OpenAI API key: " api_key
 export OPENAI_API_KEY=$api_key
 
-echo "Script execution completed."
-echo "gptADMIN dependencies satisfied so now you can run gptADMIN.py, have a nice day."
+echo -e "${GREEN}[SUCCESS] Setup completed successfully.${RESET}"
+echo -e "${CYAN}[INFO] Launching gptADMIN.py in 3 seconds...${RESET}"
+sleep 3
+
+python3 gptADMIN.py
