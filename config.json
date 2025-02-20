@@ -1,0 +1,8 @@
+{
+  "log_files": ["/var/log/syslog", "/var/log/auth.log"],
+  "email_settings": {
+    "smtp_server": "localhost",
+    "from_email": "ai_assistant@yourdomain.com",
+    "admin_email": "admin@yourdomain.com"
+  }
+}
