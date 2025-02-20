@@ -1,6 +1,5 @@
 #!/bin/bash
 
-# Colors for output
 GREEN="\e[32m"
 RED="\e[31m"
 YELLOW="\e[33m"
@@ -8,13 +7,15 @@ CYAN="\e[36m"
 BOLD="\e[1m"
 RESET="\e[0m"
 
-# Check for root privileges
+divider() {
+    echo -e "${CYAN}----------------------------------------------------${RESET}"
+}
+
 if [ "$EUID" -ne 0 ]; then
     echo -e "${RED}${BOLD}[ERROR] You need to run this script as root.${RESET}"
     exit 1
 fi
 
-# Detect package manager
 if [ -x "$(command -v apt-get)" ]; then
     package_manager="apt-get"
 elif [ -x "$(command -v dnf)" ]; then
@@ -40,10 +41,10 @@ else
     exit 1
 fi
 
-# Display detected package manager
-echo -e "${CYAN}Detected package manager: ${BOLD}${package_manager}${RESET}"
+divider
+echo -e "${CYAN}${BOLD}Detected package manager: ${package_manager}${RESET}"
+divider
 
-# Installing dependencies
 echo -e "${YELLOW}[INFO] Checking and installing required system packages...${RESET}"
 case $package_manager in
     "apt-get")
@@ -76,24 +77,27 @@ case $package_manager in
 esac
 
 echo -e "${GREEN}[SUCCESS] Required system packages checked/installed.${RESET}"
+divider
 
-# Installing Python packages
-REQUIRED_PYTHON_PACKAGES=(openai requests psutil notify2 rich smtplib)
-
+REQUIRED_PYTHON_PACKAGES=(openai requests psutil notify2 rich smtplib backoff shlex notify2 json re subprocess)
+echo -e "${YELLOW}[INFO] Checking and installing Python packages...${RESET}"
 for pkg in "${REQUIRED_PYTHON_PACKAGES[@]}"; do
     if ! python3 -c "import $pkg" &> /dev/null; then
-        echo -e "${YELLOW}[INFO] Installing missing Python package: $pkg${RESET}"
+        echo -e "${YELLOW}[INSTALLING] ${pkg}...${RESET}"
         pip3 install $pkg
     else
-        echo -e "${GREEN}[INFO] Python package already installed: $pkg${RESET}"
+        echo -e "${GREEN}[OK] ${pkg} is already installed.${RESET}"
     fi
 done
+echo -e "${GREEN}[SUCCESS] All Python packages are ready.${RESET}"
+divider
 
-# Prompt user for required data
-read -p "Enter your OpenAI API key: " api_key
+echo -e "${CYAN}${BOLD}Configuration Setup${RESET}"
+divider
+read -p $' \e[36mEnter your OpenAI API key: \e[0m' api_key
 export OPENAI_API_KEY=$api_key
 
-read -p "Enter your Discord Webhook URL (optional, press enter to skip): " discord_webhook_url
+read -p $' \e[36mEnter your Discord Webhook URL (optional, press enter to skip): \e[0m' discord_webhook_url
 
 echo -e "${YELLOW}[INFO] Writing configuration to config.json...${RESET}"
 cat > config.json <<EOL
@@ -109,8 +113,8 @@ cat > config.json <<EOL
 EOL
 
 echo -e "${GREEN}[SUCCESS] Configuration saved to config.json.${RESET}"
+divider
 
-# Final message
 echo -e "${GREEN}[SUCCESS] Setup completed successfully.${RESET}"
 echo -e "${CYAN}[INFO] Launching gptADMIN.py in 3 seconds...${RESET}"
 sleep 3
