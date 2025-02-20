@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# Colors for output
 GREEN="\e[32m"
 RED="\e[31m"
 YELLOW="\e[33m"
@@ -7,11 +8,13 @@ CYAN="\e[36m"
 BOLD="\e[1m"
 RESET="\e[0m"
 
+# Check for root privileges
 if [ "$EUID" -ne 0 ]; then
     echo -e "${RED}${BOLD}[ERROR] You need to run this script as root.${RESET}"
     exit 1
 fi
 
+# Detect package manager
 if [ -x "$(command -v apt-get)" ]; then
     package_manager="apt-get"
 elif [ -x "$(command -v dnf)" ]; then
@@ -37,9 +40,11 @@ else
     exit 1
 fi
 
+# Display detected package manager
 echo -e "${CYAN}Detected package manager: ${BOLD}${package_manager}${RESET}"
 
-echo -e "${YELLOW}[INFO] Installing required packages...${RESET}"
+# Installing dependencies
+echo -e "${YELLOW}[INFO] Checking and installing required system packages...${RESET}"
 case $package_manager in
     "apt-get")
         sudo $package_manager update -y && sudo $package_manager install -y python3 python3-pip
@@ -70,16 +75,42 @@ case $package_manager in
         ;;
 esac
 
-echo -e "${GREEN}[SUCCESS] Required system packages installed.${RESET}"
+echo -e "${GREEN}[SUCCESS] Required system packages checked/installed.${RESET}"
 
-echo -e "${YELLOW}[INFO] Installing Python libraries...${RESET}"
-pip3 install --quiet openai requests psutil notify2 rich
+# Installing Python packages
+REQUIRED_PYTHON_PACKAGES=(openai requests psutil notify2 rich smtplib)
 
-echo -e "${GREEN}[SUCCESS] Python libraries installed.${RESET}"
+for pkg in "${REQUIRED_PYTHON_PACKAGES[@]}"; do
+    if ! python3 -c "import $pkg" &> /dev/null; then
+        echo -e "${YELLOW}[INFO] Installing missing Python package: $pkg${RESET}"
+        pip3 install $pkg
+    else
+        echo -e "${GREEN}[INFO] Python package already installed: $pkg${RESET}"
+    fi
+done
 
+# Prompt user for required data
 read -p "Enter your OpenAI API key: " api_key
 export OPENAI_API_KEY=$api_key
 
+read -p "Enter your Discord Webhook URL (optional, press enter to skip): " discord_webhook_url
+
+echo -e "${YELLOW}[INFO] Writing configuration to config.json...${RESET}"
+cat > config.json <<EOL
+{
+    "log_files": ["/var/log/syslog", "/var/log/auth.log"],
+    "email_settings": {
+        "from_email": "your-email@example.com",
+        "admin_email": "admin@example.com",
+        "smtp_server": "smtp.example.com"
+    },
+    "discord_webhook_url": "$discord_webhook_url"
+}
+EOL
+
+echo -e "${GREEN}[SUCCESS] Configuration saved to config.json.${RESET}"
+
+# Final message
 echo -e "${GREEN}[SUCCESS] Setup completed successfully.${RESET}"
 echo -e "${CYAN}[INFO] Launching gptADMIN.py in 3 seconds...${RESET}"
 sleep 3
