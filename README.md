@@ -6,7 +6,7 @@
     |___|_|                                    
 
 
-# gptADMIN
+# gptADMIN 2.0
 
 # Sysadmin Assistant with ChatGPT 🛠️
 
