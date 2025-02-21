@@ -78,21 +78,36 @@ def display_menu():
     choice = Prompt.ask("Select an option", choices=["1", "2", "3", "4", "5", "6"], default="1")
     return choice
 
+#def monitor_logs():
+#    console.print(Panel("AI Assistant is monitoring the system...", title="AI Assistant"))
+#    try:
+#        while True:
+#            for log_file in log_files:
+#                try:
+#                    with open(log_file, 'r') as f:
+#                        logs = f.readlines()
+#
+#                    error_pattern = re.compile(r'(.*error.*)', re.IGNORECASE)
+#                    matches = error_pattern.findall("".join(logs))
+#                    for error in matches:
+#                        classify_and_handle_error(error, log_file)
+#                except FileNotFoundError:
+#                    console.print(f"[yellow]Warning: {log_file} not found.[/yellow]")
+#
+#            time.sleep(60)
+#    except KeyboardInterrupt:
+#        console.print("[bold red]Stopping AI Assistant.[/bold red]")
+
 def monitor_logs():
     console.print(Panel("AI Assistant is monitoring the system...", title="AI Assistant"))
     try:
         while True:
-            for log_file in log_files:
-                try:
-                    with open(log_file, 'r') as f:
-                        logs = f.readlines()
+            logs = get_journalctl_logs()  # Get logs from journalctl
 
-                    error_pattern = re.compile(r'(.*error.*)', re.IGNORECASE)
-                    matches = error_pattern.findall("".join(logs))
-                    for error in matches:
-                        classify_and_handle_error(error, log_file)
-                except FileNotFoundError:
-                    console.print(f"[yellow]Warning: {log_file} not found.[/yellow]")
+            error_pattern = re.compile(r'(.*error.*)', re.IGNORECASE)
+            matches = error_pattern.findall(logs)
+            for error in matches:
+                classify_and_handle_error(error, "journalctl")
 
             time.sleep(60)
     except KeyboardInterrupt:
@@ -123,6 +138,17 @@ def send_desktop_notification(severity, message):
 #        n = notify2.Notification("Critical Error Detected", message, "dialog-warning")
 #        n.set_urgency(notify2.URGENCY_CRITICAL)
 #        n.show()
+
+def get_journalctl_logs():
+    try:
+        result = subprocess.run(
+            ["journalctl", "-n", "100", "--no-pager"],  # Get last 100 lines
+            text=True,
+            capture_output=True
+        )
+        return result.stdout
+    except Exception as e:
+        return f"Error retrieving logs: {e}"
 
 def get_gpt_response(conversation):
     return openai.ChatCompletion.create(
