@@ -7,7 +7,8 @@ import logging
 import json
 import smtplib
 import psutil
-import notify2
+#import notify2
+from plyer import notification
 import shlex
 import platform
 import requests
@@ -22,12 +23,12 @@ from email.mime.text import MIMEText
 
 console = Console()
 
-if os.getenv("DISPLAY") or os.getenv("DBUS_SESSION_BUS_ADDRESS"):
-    notify2.init("AI Assistant")
-else:
-    console.print("[yellow]Skipping notify2: No GUI detected (headless mode).[/yellow]")
-
-logging.basicConfig(filename='assistant.log', level=logging.INFO)
+#if os.getenv("DISPLAY") or os.getenv("DBUS_SESSION_BUS_ADDRESS"):
+#    notify2.init("AI Assistant")
+#else:
+#    console.print("[yellow]Skipping notify2: No GUI detected (headless mode).[/yellow]")
+#
+#logging.basicConfig(filename='assistant.log', level=logging.INFO)
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 with open('config.json') as f:
@@ -43,7 +44,7 @@ else:
         notify2.init("AI Assistant")
     except Exception as e:
         console.print(f"[red]notify2 failed to initialize: {e}[/red]")
-        
+
 if not openai.api_key:
     console.print("[red]OpenAI API key not found. Please set it in environment variables.[/red]")
     exit(1)
@@ -113,10 +114,15 @@ def classify_and_handle_error(error_message, source):
     explain_and_suggest_fix(error_message, severity)
 
 def send_desktop_notification(severity, message):
-    if severity == "critical":
-        n = notify2.Notification("Critical Error Detected", message, "dialog-warning")
-        n.set_urgency(notify2.URGENCY_CRITICAL)
-        n.show()
+#    if severity == "critical":
+        notification.notify(
+        title=f"{severity.capitalize()} Error Detected",
+        message=message,
+        app_name="AI Assistant"
+    )
+#        n = notify2.Notification("Critical Error Detected", message, "dialog-warning")
+#        n.set_urgency(notify2.URGENCY_CRITICAL)
+#        n.show()
 
 def get_gpt_response(conversation):
     return openai.ChatCompletion.create(
