@@ -9,7 +9,6 @@ import smtplib
 import psutil
 import notify2
 import shlex
-import subprocess
 import platform
 import requests
 import backoff
@@ -27,12 +26,27 @@ if os.getenv("DISPLAY") or os.getenv("DBUS_SESSION_BUS_ADDRESS"):
     notify2.init("AI Assistant")
 else:
     console.print("[yellow]Skipping notify2: No GUI detected (headless mode).[/yellow]")
-    
+
 logging.basicConfig(filename='assistant.log', level=logging.INFO)
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 with open('config.json') as f:
     config = json.load(f)
+
+def is_headless():
+    return not os.getenv("DISPLAY") and not os.getenv("DBUS_SESSION_BUS_ADDRESS")
+
+if is_headless():
+    console.print("[yellow]Skipping notify2: No GUI detected (headless mode).[/yellow]")
+else:
+    try:
+        notify2.init("AI Assistant")
+    except Exception as e:
+        console.print(f"[red]notify2 failed to initialize: {e}[/red]")
+        
+if not openai.api_key:
+    console.print("[red]OpenAI API key not found. Please set it in environment variables.[/red]")
+    exit(1)
 
 log_files = config['log_files']
 email_settings = config['email_settings']
