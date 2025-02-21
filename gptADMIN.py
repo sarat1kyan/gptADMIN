@@ -23,8 +23,11 @@ from email.mime.text import MIMEText
 
 console = Console()
 
-notify2.init("AI Assistant")
-
+if os.getenv("DISPLAY") or os.getenv("DBUS_SESSION_BUS_ADDRESS"):
+    notify2.init("AI Assistant")
+else:
+    console.print("[yellow]Skipping notify2: No GUI detected (headless mode).[/yellow]")
+    
 logging.basicConfig(filename='assistant.log', level=logging.INFO)
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
@@ -245,6 +248,7 @@ if __name__ == "__main__":
         if choice == "1":
             monitor_logs()
         elif choice == "2":
+            console.print("[yellow]View Error History: Feature coming soon.[/yellow]")
             show_history()
         elif choice == "3":
             gather_diagnostics()
