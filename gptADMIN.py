@@ -28,7 +28,7 @@ console = Console()
 #else:
 #    console.print("[yellow]Skipping notify2: No GUI detected (headless mode).[/yellow]")
 #
-#logging.basicConfig(filename='assistant.log', level=logging.INFO)
+logging.basicConfig(filename='assistant.log', level=logging.INFO)
 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 with open('config.json') as f:
@@ -43,7 +43,6 @@ else:
     try:
         notify2.init("AI Assistant")
     except Exception as e:
-        console.print(f"[red]notify2 failed to initialize: {e}[/red]")
 
 if not openai.api_key:
     console.print("[red]OpenAI API key not found. Please set it in environment variables.[/red]")
@@ -102,7 +101,7 @@ def monitor_logs():
     console.print(Panel("AI Assistant is monitoring the system...", title="AI Assistant"))
     try:
         while True:
-            logs = get_journalctl_logs()  # Get logs from journalctl
+            logs = get_journalctl_logs() 
 
             error_pattern = re.compile(r'(.*error.*)', re.IGNORECASE)
             matches = error_pattern.findall(logs)
