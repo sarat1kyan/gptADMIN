@@ -29,7 +29,9 @@ Get started quickly:
     ./gptADMIN.sh
     ```
 3. The setup script will prompt you to enter your OpenAI API key. Make sure to have an OpenAI account and generate an API key.
-
+4. The Alarming system has been added woth Update 2.0 so now you can get updates and alarms to your email or Discord channel using the webhook.
+4.1 If you prefer use this tool without the alarming system just write NULL for email settings.
+   
 ## 💡 Usage
 
 1. Once setup is complete, run the main script using:
@@ -38,8 +40,9 @@ Get started quickly:
     ```
 2. The script will proactively monitor system logs for errors.
 3. When an error is detected, initiate a ChatGPT session for in-depth troubleshooting.
-4. Exit the chat session by typing 'exit' or 'quit'.
-5. Stop the Sysadmin Assistant with Ctrl+C.
+4. Now with Update 2.0 you also can perform system diagnostics
+5. Exit the chat session by typing 'exit' or 'quit'.
+6. Stop the Sysadmin Assistant with Ctrl+C.
 
 ## ⚠️ Caution
 
