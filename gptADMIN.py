@@ -401,12 +401,46 @@ def gather_diagnostics():
     console.print("\n[bold green]✅ System Diagnostics Completed![/bold green]\n")
 
 def check_for_updates():
-    console.print("[yellow]Checking for updates...[/yellow]")
-    for step in track(range(10), description="Applying updates..."):
-        time.sleep(0.1)
-    subprocess.run("git pull origin main", shell=True)
-    console.print("[green]Updates applied successfully (if any).[/green]")
+    console.print("[yellow][INFO] Checking for updates...[/yellow]")
 
+    status_result = subprocess.run("git status --porcelain", shell=True, capture_output=True, text=True)
+    if status_result.stdout.strip():
+        console.print("[red][WARNING] You have uncommitted changes![/red]")
+
+        user_choice = input("Do you want to (c)ommit, (s)tash, or (a)bort update? [c/s/a]: ").strip().lower()
+
+        if user_choice == "c":
+            commit_message = input("Enter commit message: ").strip()
+            subprocess.run(f"git add . && git commit -m '{commit_message}'", shell=True)
+        elif user_choice == "s":
+            subprocess.run("git stash", shell=True)
+            console.print("[yellow][INFO] Changes stashed temporarily.[/yellow]")
+        elif user_choice == "a":
+            console.print("[red][INFO] Update aborted.[/red]")
+            return
+        else:
+            console.print("[red][ERROR] Invalid choice. Update aborted.[/red]")
+            return
+
+    console.print("[yellow]Applying updates...[/yellow]")
+    for _ in track(range(10), description="Updating repository..."):
+        subprocess.run("sleep 0.1", shell=True)
+
+    update_result = subprocess.run("git pull origin main", shell=True, capture_output=True, text=True)
+
+    if "Aborting" in update_result.stderr:
+        console.print("[red][ERROR] Update failed! Resolve conflicts manually.[/red]")
+        return
+
+    console.print("[green][SUCCESS] Update applied successfully![/green]")
+
+    stash_list = subprocess.run("git stash list", shell=True, capture_output=True, text=True).stdout
+    if "stash@{0}" in stash_list:
+        console.print("[yellow][INFO] Restoring stashed changes...[/yellow]")
+        subprocess.run("git stash pop", shell=True)
+
+    console.print("[green]Update process completed![/green]")
+    
 if __name__ == "__main__":
     while True:
         choice = display_menu()
