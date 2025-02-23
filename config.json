@@ -1,8 +1,50 @@
 {
-  "log_files": ["/var/log/syslog", "/var/log/auth.log"],
-  "email_settings": {
-    "smtp_server": "localhost",
-    "from_email": "ai_assistant@yourdomain.com",
-    "admin_email": "admin@yourdomain.com"
-  }
+    "log_files": [
+      "/var/log/syslog",
+      "/var/log/auth.log",
+      "/var/log/dpkg.log",
+      "/var/log/kern.log",
+      "/var/log/faillog",
+      "/var/log/cron.log",
+      "/var/log/mail.log",
+      "/var/log/mysqld.log",
+      "/var/log/mariadb/mariadb.log",
+      "/var/log/httpd/error_log",
+      "/var/log/apache2/error.log",
+      "/var/log/nginx/error.log",
+      "/var/log/Xorg.0.log",
+      "/var/log/messages",
+      "/var/log/boot.log",
+      "/var/log/yum.log",
+      "/var/log/secure",
+      "/var/log/journal",
+      "/var/log/maillog",
+      "/var/log/alternatives.log",
+      "/var/log/btmp",
+      "/var/log/wtmp",
+      "/var/log/lastlog",
+      "/var/log/sudo.log",
+      "/var/log/apt/history.log",
+      "/var/log/apt/term.log",
+      "/var/log/audit/audit.log",
+      "/var/log/lightdm/lightdm.log",
+      "/var/log/Xorg.1.log",
+      "/var/log/user.log"
+  ],
+    "email_settings": {
+        "smtp_server": "smtp.your-email.com",
+        "smtp_port": 587,
+        "use_tls": true,
+        "from_email": "your-email@example.com",
+        "admin_email": "admin@example.com",
+        "email_password": "your-email-password"
+    },
+    "discord_webhook_url": "https://discord.com/api/webhooks/YOUR_WEBHOOK_URL",
+    "monitor_interval": 60,
+    "error_keywords": [
+        "error",
+        "critical",
+        "fail",
+        "warning"
+    ]
 }
