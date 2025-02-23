@@ -25,8 +25,8 @@ Get started quickly:
 1. Clone this repository to your local machine.
 2. Run the setup script to install necessary dependencies and configure your API key:
     ```bash
-    chmod +x gptADMIN.sh
-    ./gptADMIN.sh
+    chmod +x setup.sh
+    bash setup.sh
     ```
 3. The setup script will prompt you to enter your OpenAI API key. Make sure to have an OpenAI account and generate an API key.
 4. The Alarming system has been added woth Update 2.0 so now you can get updates and alarms to your email or Discord channel using the webhook.
