@@ -129,12 +129,18 @@ def classify_and_handle_error(error_message, source):
     explain_and_suggest_fix(error_message, severity)
 
 def send_desktop_notification(severity, message):
-#    if severity == "critical":
+    if os.getenv("DISPLAY"): 
         notification.notify(
-        title=f"{severity.capitalize()} Error Detected",
-        message=message,
-        app_name="AI Assistant"
-    )
+            title=f"{severity.capitalize()} Error Detected",
+            message=message,
+            app_name="AI Assistant"
+        )
+    else:
+        try:
+            subprocess.run(["notify-send", f"{severity.capitalize()} Error", message])
+        except FileNotFoundError:
+            print(f"Notification failed: No GUI or notify-send available.")
+            
 #        n = notify2.Notification("Critical Error Detected", message, "dialog-warning")
 #        n.set_urgency(notify2.URGENCY_CRITICAL)
 #        n.show()
