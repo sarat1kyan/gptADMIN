@@ -124,7 +124,7 @@ def classify_and_handle_error(error_message, source):
         severity = "info"
         severity_style = "[bold green]"
 
-    console.print(f"{severity_style}{severity.capitalize()} Error Detected in {source}:[/bold] {error_message}")
+    console.print(f"{severity_style}{severity.capitalize()} Error Detected in {source}:[/bold] {error_message}[/]")
     send_desktop_notification(severity, error_message)
     explain_and_suggest_fix(error_message, severity)
 
