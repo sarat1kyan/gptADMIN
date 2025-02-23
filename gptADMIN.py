@@ -8,6 +8,7 @@ import json
 import smtplib
 import psutil
 #import notify2
+from datetime import datetime
 from plyer import notification
 import shlex
 import platform
@@ -336,23 +337,68 @@ def send_email_notification(subject, body):
     s.sendmail(msg['From'], [msg['To']], msg.as_string())
     s.quit()
 
-def notify_fix_applied(details):
-    send_email_notification("Fix Applied", details)
-
 def gather_diagnostics():
+    console.print("[cyan][INFO] Running System Diagnostics...[/cyan]")
+
+    uname = platform.uname()
+    uptime = subprocess.run("uptime -p", shell=True, capture_output=True, text=True).stdout.strip()
+    
+    console.print(f"\n[bold]📌 System Info:[/bold]")
+    console.print(f"🔹 OS: {uname.system} {uname.release} ({uname.version})")
+    console.print(f"🔹 Hostname: {uname.node}")
+    console.print(f"🔹 Uptime: {uptime}")
+
     cpu_usage = psutil.cpu_percent(interval=1)
-    memory_info = psutil.virtual_memory()
-    disk_usage = psutil.disk_usage('/')
+    cpu_freq = psutil.cpu_freq()
+    load_avg = os.getloadavg() if hasattr(os, 'getloadavg') else (0, 0, 0)
+    
+    console.print(f"\n[bold]🖥️ CPU Info:[/bold]")
+    console.print(f"🔹 CPU Usage: {cpu_usage}%")
+    console.print(f"🔹 CPU Frequency: {cpu_freq.current:.2f} MHz")
+    console.print(f"🔹 Load Average (1m, 5m, 15m): {load_avg}")
 
-    table = Table(title="System Diagnostics", show_lines=True)
-    table.add_column("Metric", justify="center", style="cyan")
-    table.add_column("Value", justify="center")
+    mem = psutil.virtual_memory()
+    swap = psutil.swap_memory()
+    
+    console.print(f"\n[bold]🧠 Memory Info:[/bold]")
+    console.print(f"🔹 Total Memory: {mem.total / (1024 ** 3):.2f} GB")
+    console.print(f"🔹 Used Memory: {mem.used / (1024 ** 3):.2f} GB ({mem.percent}%)")
+    console.print(f"🔹 Swap Usage: {swap.used / (1024 ** 3):.2f} GB ({swap.percent}%)")
 
-    table.add_row("CPU Usage", f"{cpu_usage}%")
-    table.add_row("Memory Usage", f"{memory_info.percent}%")
-    table.add_row("Disk Usage", f"{disk_usage.percent}%")
+    disk = psutil.disk_usage('/')
+    io_counters = psutil.disk_io_counters()
+    
+    console.print(f"\n[bold]💾 Disk Info:[/bold]")
+    console.print(f"🔹 Total Disk Space: {disk.total / (1024 ** 3):.2f} GB")
+    console.print(f"🔹 Used Disk Space: {disk.used / (1024 ** 3):.2f} GB ({disk.percent}%)")
+    console.print(f"🔹 Disk Reads: {io_counters.read_count} | Writes: {io_counters.write_count}")
 
-    console.print(table)
+    net_io = psutil.net_io_counters()
+    net_errors = subprocess.run("dmesg | grep -i 'eth0\|wlan\|network'", shell=True, capture_output=True, text=True).stdout.strip()
+    
+    console.print(f"\n[bold]🌐 Network Info:[/bold]")
+    console.print(f"🔹 Data Sent: {net_io.bytes_sent / (1024 ** 2):.2f} MB")
+    console.print(f"🔹 Data Received: {net_io.bytes_recv / (1024 ** 2):.2f} MB")
+    
+    if net_errors:
+        console.print(f"[red]⚠️ Network Errors Detected:[/red] {net_errors}")
+
+    services = ["ssh", "apache2", "nginx", "mysql", "docker"]
+    active_services = []
+    
+    for service in services:
+        status = subprocess.run(f"systemctl is-active {service}", shell=True, capture_output=True, text=True).stdout.strip()
+        if status == "active":
+            active_services.append(service)
+    
+    console.print(f"\n[bold]🛠️ Running Services:[/bold] {', '.join(active_services) if active_services else '[red]None[/red]'}")
+
+    logs = subprocess.run("journalctl -p 3 -n 20 --no-pager", shell=True, capture_output=True, text=True).stdout.strip()
+    
+    console.print("\n[bold]🔥 Recent System Errors:[/bold]")
+    console.print(logs if logs else "[green]No recent critical errors found.[/green]")
+
+    console.print("\n[bold green]✅ System Diagnostics Completed![/bold green]\n")
 
 def check_for_updates():
     console.print("[yellow]Checking for updates...[/yellow]")
