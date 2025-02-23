@@ -165,61 +165,40 @@ def get_gpt_response(conversation):
         timeout=10
     )
 
-#def explain_and_suggest_fix(error_message, severity):
-#    console.print(f"[cyan]Analyzing {severity} error with GPT...[/cyan]")
-#
-#    system_info = f"OS: {os.uname().sysname} {os.uname().release}, Python: {platform.python_version()}"
-#    conversation = [
-#    {"role": "system", "content": "You are a sysadmin assistant. Help the user troubleshoot system errors."},
-#    {"role": "user", "content": f"System Info: {system_info}. Error: {error_message}. Please provide an explanation and suggest shell commands to fix it."}
-#]
-#
-#    try:
-#        response = openai.ChatCompletion.create(
-#            model="gpt-4",
-#            messages=conversation,
-#            timeout=10  
-#        )
-#        suggestion = response['choices'][0]['message']['content']
-#        console.print(Panel(suggestion, title="GPT Explanation & Suggested Fix"))
-#
-#        suggested_commands = extract_commands_from_gpt(suggestion)
-#
-#        if suggested_commands:
-#            console.print(f"[yellow]Suggested commands to execute:[/yellow] {suggested_commands}")
-#        else:
-#            console.print("[yellow]No shell commands provided by GPT. Manual intervention may be required.[/yellow]")
-#        
-#        user_choice = Prompt.ask("Do you want me to try these commands?", choices=["yes", "no"], default="no")
-#        if user_choice == "yes" and suggested_commands:
-#            perform_fix(suggested_commands)
-#        else:
-#            console.print("[yellow]No fix will be applied.[/yellow]")
-#    
-#    except Exception as e:
-#        console.print(f"[red]Error in GPT request: {e}[/red]")
-#        logging.error(f"GPT request error: {e}")
-#
-
 def explain_and_suggest_fix(error_message, severity):
-    print(f"[INFO] Analyzing {severity} error with GPT...")
+    console.print(f"[cyan]Analyzing {severity} error with GPT...[/cyan]")
 
     system_info = f"OS: {os.uname().sysname} {os.uname().release}, Python: {platform.python_version()}"
     conversation = [
-        {"role": "system", "content": "You are a sysadmin assistant. Help troubleshoot system errors."},
-        {"role": "user", "content": f"System Info: {system_info}. Error: {error_message}. Suggest a fix."}
-    ]
+    {"role": "system", "content": "You are a sysadmin assistant. Help the user troubleshoot system errors."},
+    {"role": "user", "content": f"System Info: {system_info}. Error: {error_message}. Please provide an explanation and suggest shell commands to fix it."}
+]
 
     try:
-        response = client.chat.completions.create(  # ✅ Updated API call
+        response = openai.ChatCompletion.create(
             model="gpt-4",
-            messages=conversation
+            messages=conversation,
+            timeout=10  
         )
-        suggestion = response.choices[0].message.content  # ✅ Extract response
-        print(f"[GPT Suggestion] {suggestion}")
+        suggestion = response['choices'][0]['message']['content']
+        console.print(Panel(suggestion, title="GPT Explanation & Suggested Fix"))
 
+        suggested_commands = extract_commands_from_gpt(suggestion)
+
+        if suggested_commands:
+            console.print(f"[yellow]Suggested commands to execute:[/yellow] {suggested_commands}")
+        else:
+            console.print("[yellow]No shell commands provided by GPT. Manual intervention may be required.[/yellow]")
+        
+        user_choice = Prompt.ask("Do you want me to try these commands?", choices=["yes", "no"], default="no")
+        if user_choice == "yes" and suggested_commands:
+            perform_fix(suggested_commands)
+        else:
+            console.print("[yellow]No fix will be applied.[/yellow]")
+    
     except Exception as e:
-        print(f"[ERROR] GPT request failed: {e}")
+        console.print(f"[red]Error in GPT request: {e}[/red]")
+        logging.error(f"GPT request error: {e}")
 
 def extract_commands_from_gpt(gpt_response):
     command_block_pattern = re.findall(r"```(?:bash|shell)?\n(.*?)\n```", gpt_response, re.DOTALL)
