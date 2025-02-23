@@ -58,10 +58,41 @@ if not openai.api_key:
     console.print("[red]OpenAI API key not found. Please set the OPENAI_API_KEY environment variable.[/red]")
     raise ValueError("OpenAI API key not found. Please set the OPENAI_API_KEY environment variable.")
 
-def send_discord_notification(message):
-    webhook_url = "YOUR_DISCORD_WEBHOOK_URL"
-    payload = {"content": message}
-    requests.post(webhook_url, json=payload)
+import requests
+import json
+
+def send_discord_notification(title, message):
+
+    try:
+        with open("config.json", "r") as f:
+            config = json.load(f)
+
+        webhook_url = config.get("discord_webhook_url")
+        if not webhook_url:
+            print("[ERROR] No Discord webhook URL found in config.json")
+            return
+
+        payload = {
+            "username": "gptADMIN",
+            "embeds": [
+                {
+                    "title": title,
+                    "description": message,
+                    "color": 5814783, 
+                    "footer": {"text": "Sent by gptADMIN"}
+                }
+            ]
+        }
+
+        response = requests.post(webhook_url, json=payload)
+
+        if response.status_code == 204:
+            print("[SUCCESS] Message sent to Discord successfully!")
+        else:
+            print(f"[ERROR] Failed to send message to Discord. Response: {response.status_code} - {response.text}")
+
+    except Exception as e:
+        print(f"[ERROR] Discord notification failed: {e}")
 
 def display_menu():
     console.print(Panel("[bold cyan]AI Assistant - Main Menu[/bold cyan]", expand=False))
@@ -343,45 +374,65 @@ def gather_diagnostics():
     uname = platform.uname()
     uptime = subprocess.run("uptime -p", shell=True, capture_output=True, text=True).stdout.strip()
     
-    console.print(f"\n[bold]📌 System Info:[/bold]")
-    console.print(f"🔹 OS: {uname.system} {uname.release} ({uname.version})")
-    console.print(f"🔹 Hostname: {uname.node}")
-    console.print(f"🔹 Uptime: {uptime}")
+    system_info = f"""
+    **📌 System Info**
+    🔹 OS: {uname.system} {uname.release} ({uname.version})  
+    🔹 Hostname: {uname.node}  
+    🔹 Uptime: {uptime}  
+    """
+
+    console.print(system_info)
 
     cpu_usage = psutil.cpu_percent(interval=1)
     cpu_freq = psutil.cpu_freq()
     load_avg = os.getloadavg() if hasattr(os, 'getloadavg') else (0, 0, 0)
+
+    cpu_info = f"""
+    **🖥️ CPU Info**
+    🔹 CPU Usage: {cpu_usage}%  
+    🔹 CPU Frequency: {cpu_freq.current:.2f} MHz  
+    🔹 Load Average (1m, 5m, 15m): {load_avg}  
+    """
     
-    console.print(f"\n[bold]🖥️ CPU Info:[/bold]")
-    console.print(f"🔹 CPU Usage: {cpu_usage}%")
-    console.print(f"🔹 CPU Frequency: {cpu_freq.current:.2f} MHz")
-    console.print(f"🔹 Load Average (1m, 5m, 15m): {load_avg}")
+    console.print(cpu_info)
 
     mem = psutil.virtual_memory()
     swap = psutil.swap_memory()
+
+    memory_info = f"""
+    **🧠 Memory Info**
+    🔹 Total Memory: {mem.total / (1024 ** 3):.2f} GB  
+    🔹 Used Memory: {mem.used / (1024 ** 3):.2f} GB ({mem.percent}%)  
+    🔹 Swap Usage: {swap.used / (1024 ** 3):.2f} GB ({swap.percent}%)  
+    """
     
-    console.print(f"\n[bold]🧠 Memory Info:[/bold]")
-    console.print(f"🔹 Total Memory: {mem.total / (1024 ** 3):.2f} GB")
-    console.print(f"🔹 Used Memory: {mem.used / (1024 ** 3):.2f} GB ({mem.percent}%)")
-    console.print(f"🔹 Swap Usage: {swap.used / (1024 ** 3):.2f} GB ({swap.percent}%)")
+    console.print(memory_info)
 
     disk = psutil.disk_usage('/')
     io_counters = psutil.disk_io_counters()
+
+    disk_info = f"""
+    **💾 Disk Info**
+    🔹 Total Disk Space: {disk.total / (1024 ** 3):.2f} GB  
+    🔹 Used Disk Space: {disk.used / (1024 ** 3):.2f} GB ({disk.percent}%)  
+    🔹 Disk Reads: {io_counters.read_count} | Writes: {io_counters.write_count}  
+    """
     
-    console.print(f"\n[bold]💾 Disk Info:[/bold]")
-    console.print(f"🔹 Total Disk Space: {disk.total / (1024 ** 3):.2f} GB")
-    console.print(f"🔹 Used Disk Space: {disk.used / (1024 ** 3):.2f} GB ({disk.percent}%)")
-    console.print(f"🔹 Disk Reads: {io_counters.read_count} | Writes: {io_counters.write_count}")
+    console.print(disk_info)
 
     net_io = psutil.net_io_counters()
     net_errors = subprocess.run("dmesg | grep -i 'eth0\|wlan\|network'", shell=True, capture_output=True, text=True).stdout.strip()
-    
-    console.print(f"\n[bold]🌐 Network Info:[/bold]")
-    console.print(f"🔹 Data Sent: {net_io.bytes_sent / (1024 ** 2):.2f} MB")
-    console.print(f"🔹 Data Received: {net_io.bytes_recv / (1024 ** 2):.2f} MB")
-    
+
+    network_info = f"""
+    **🌐 Network Info**
+    🔹 Data Sent: {net_io.bytes_sent / (1024 ** 2):.2f} MB  
+    🔹 Data Received: {net_io.bytes_recv / (1024 ** 2):.2f} MB  
+    """
+
     if net_errors:
-        console.print(f"[red]⚠️ Network Errors Detected:[/red] {net_errors}")
+        network_info += f"\n⚠️ **Network Errors Detected:** {net_errors}"
+    
+    console.print(network_info)
 
     services = ["ssh", "apache2", "nginx", "mysql", "docker"]
     active_services = []
@@ -390,16 +441,32 @@ def gather_diagnostics():
         status = subprocess.run(f"systemctl is-active {service}", shell=True, capture_output=True, text=True).stdout.strip()
         if status == "active":
             active_services.append(service)
+
+    services_info = f"""
+    **🛠️ Running Services**
+    {', '.join(active_services) if active_services else '[None]'}  
+    """
     
-    console.print(f"\n[bold]🛠️ Running Services:[/bold] {', '.join(active_services) if active_services else '[red]None[/red]'}")
+    console.print(services_info)
 
-    logs = subprocess.run("journalctl -p 3 -n 20 --no-pager", shell=True, capture_output=True, text=True).stdout.strip()
-    
-    console.print("\n[bold]🔥 Recent System Errors:[/bold]")
-    console.print(logs if logs else "[green]No recent critical errors found.[/green]")
+    logs = subprocess.run("journalctl -p 3 -n 10 --no-pager", shell=True, capture_output=True, text=True).stdout.strip()
 
-    console.print("\n[bold green]✅ System Diagnostics Completed![/bold green]\n")
+    logs_info = f"""
+    **🔥 Recent System Errors**
+    {logs if logs else "✅ No recent critical errors found."}  
+    """
 
+    console.print(logs_info)
+
+    summary = f"""
+    ✅ **Diagnostics completed successfully!**
+    """
+
+    console.print(summary)
+
+    # **Send diagnostics to Discord**
+    full_report = f"{system_info}\n{cpu_info}\n{memory_info}\n{disk_info}\n{network_info}\n{services_info}\n{logs_info}\n{summary}"
+    send_discord_notification("📊 System Diagnostics Report", full_report)
 def check_for_updates():
     console.print("[yellow][INFO] Checking for updates...[/yellow]")
 
