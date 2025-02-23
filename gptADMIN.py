@@ -200,7 +200,7 @@ def explain_and_suggest_fix(error_message, severity):
         console.print(f"[red]Error in GPT request: {e}[/red]")
         logging.error(f"GPT request error: {e}")
 '''
-
+'''
 def explain_and_suggest_fix(error_message, severity):
     print(f"[INFO] Analyzing {severity} error with GPT...")
 
@@ -220,6 +220,51 @@ def explain_and_suggest_fix(error_message, severity):
 
     except Exception as e:
         print(f"[ERROR] GPT request failed: {e}")
+'''
+
+def explain_and_suggest_fix(error_message, severity):
+    print(f"[INFO] Analyzing {severity} error with GPT...")
+
+    system_info = "Linux Server, Debian OS"
+    conversation = [
+        {"role": "system", "content": "You are a sysadmin assistant. Help troubleshoot system errors."},
+        {"role": "user", "content": f"System Info: {system_info}. Error: {error_message}. Suggest a fix."}
+    ]
+
+    max_retries = 5  
+    for attempt in range(max_retries):
+        try:
+            # First, try GPT-4
+            try:
+                response = client.chat.completions.create(
+                    model="gpt-4o-2024-08-06",
+                    messages=conversation
+                )
+            except openai.APIError as e:
+                if "model_not_found" in str(e):
+                    print("[WARNING] GPT-4 is unavailable. Falling back to GPT-3.5.")
+                    response = client.chat.completions.create(
+                        model="gpt-3.5-turbo",
+                        messages=conversation
+                    )
+                else:
+                    raise e 
+
+            suggestion = response.choices[0].message.content
+            print(f"[GPT Suggestion] {suggestion}")
+            return suggestion 
+
+        except openai.APIError as e:
+            if "insufficient_quota" in str(e):
+                print("[ERROR] OpenAI quota exceeded! Check billing at https://platform.openai.com/account/billing")
+                return
+            elif attempt < max_retries - 1:
+                wait_time = (2 ** attempt) + random.uniform(0, 1)
+                print(f"[WARNING] OpenAI API request failed ({e}). Retrying in {wait_time:.2f} seconds...")
+                time.sleep(wait_time)
+            else:
+                print("[ERROR] Failed after multiple retries.")
+                return
 
 def extract_commands_from_gpt(gpt_response):
     command_block_pattern = re.findall(r"```(?:bash|shell)?\n(.*?)\n```", gpt_response, re.DOTALL)
