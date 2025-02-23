@@ -160,11 +160,11 @@ def get_journalctl_logs():
 
 def get_gpt_response(conversation):
     return openai.ChatCompletion.create(
-        model="gpt-4",
+        model="gpt-4o-2024-08-06",
         messages=conversation,
         timeout=10
     )
-
+'''
 def explain_and_suggest_fix(error_message, severity):
     console.print(f"[cyan]Analyzing {severity} error with GPT...[/cyan]")
 
@@ -176,7 +176,7 @@ def explain_and_suggest_fix(error_message, severity):
 
     try:
         response = openai.ChatCompletion.create(
-            model="gpt-4",
+            model="gpt-4o-2024-08-06",
             messages=conversation,
             timeout=10  
         )
@@ -199,6 +199,27 @@ def explain_and_suggest_fix(error_message, severity):
     except Exception as e:
         console.print(f"[red]Error in GPT request: {e}[/red]")
         logging.error(f"GPT request error: {e}")
+'''
+
+def explain_and_suggest_fix(error_message, severity):
+    print(f"[INFO] Analyzing {severity} error with GPT...")
+
+    system_info = f"OS: {os.uname().sysname} {os.uname().release}, Python: {platform.python_version()}"
+    conversation = [
+        {"role": "system", "content": "You are a sysadmin assistant. Help troubleshoot system errors."},
+        {"role": "user", "content": f"System Info: {system_info}. Error: {error_message}. Suggest a fix."}
+    ]
+
+    try:
+        response = client.chat.completions.create(  
+            model="gpt-4o-2024-08-06",
+            messages=conversation
+        )
+        suggestion = response.choices[0].message.content  
+        print(f"[GPT Suggestion] {suggestion}")
+
+    except Exception as e:
+        print(f"[ERROR] GPT request failed: {e}")
 
 def extract_commands_from_gpt(gpt_response):
     command_block_pattern = re.findall(r"```(?:bash|shell)?\n(.*?)\n```", gpt_response, re.DOTALL)
