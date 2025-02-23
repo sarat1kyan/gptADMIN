@@ -44,6 +44,7 @@ else:
     try:
         notify2.init("AI Assistant")
     except Exception as e:
+        console.print(f"[red]Functionality check completed[/red]")
 
 if not openai.api_key:
     console.print("[red]OpenAI API key not found. Please set it in environment variables.[/red]")
