@@ -84,15 +84,15 @@ def send_welcome(message):
         return
 
     welcome_text = (
-        "🌙 *Welcome to MoonLit Admin Bot\\!* \n\n"
-        "🔧 *Your personal system administrator in Telegram\\!* 🚀\n"
+        "🌙 *Welcome to MoonLit Admin Bot\* \n\n"
+        "🔧 *Your personal system administrator in Telegram\* 🚀\n"
         "💡 *Control your server securely from anywhere\\.*\n\n"
         "📌 *Features:* \n"
         "✅ System Monitoring \n"
         "✅ Server Control \n"
         "✅ Log Checking \n"
         "✅ Custom Command Execution \n\n"
-        "Use the buttons below or type /help for more commands\\!"
+        "Use the buttons below or type /help for more commands\"
     )
 
     keyboard = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=False)
@@ -128,10 +128,10 @@ def send_about(message):
 
     about_text = (
         "❓ *About MoonLit Bot*\n\n"
-        "🌙 *MoonLit is a powerful Telegram bot designed for system monitoring and management\!* \n"
+        "🌙 *MoonLit is a powerful Telegram bot designed for system monitoring and management* \n"
         "🔧 It provides easy access to system commands, logs, and performance data\.\n"
         "🛡️ Secure, reliable, and easy to use\.\n\n"
-        "💡 *Developed for system admins who want full control over their servers remotely\!* 🚀\n\n"
+        "💡 *Developed for system admins who want full control over their servers remotely* 🚀\n\n"
         "📌 *Main Features:* \n"
         "• 📊 System Monitoring\n"
         "• 🖥️ Server Control\n"
@@ -169,7 +169,7 @@ def send_help(message):
         "❓ *Other Commands:*\n"
         "• `/help` – Show this help message ℹ️\n"
         "• `/about` – About the bot ❓\n\n"
-        "💡 *Use the buttons below or type a command\\!*"
+        "💡 *Use the buttons below or type a command\*"
     )
 
     bot.send_message(message.chat.id, help_text, parse_mode="MarkdownV2")
