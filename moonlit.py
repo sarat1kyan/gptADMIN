@@ -334,7 +334,7 @@ def confirm_execution(call):
 
         response_message = f"✅ *Command Executed in {duration:.2f}s:*\n```\n{escaped_result[:1900]}\n```"
 
-        if len(escaped_result) > 1900:  # If output is too long, send as a file
+        if len(escaped_result) > 1900:
             log_filename = f"command_output_{int(time.time())}.txt"
             with open(log_filename, "w") as log_file:
                 log_file.write(result)
@@ -374,8 +374,8 @@ def handle_command(message):
         except Exception as e:
             bot.reply_to(message, f"❌ *Error executing command:* `{escape_markdown_v2(str(e))}`", parse_mode="MarkdownV2")
 
-     else:
-         bot.reply_to(message, "❌ *Invalid command.* Use `/help` for available commands.", parse_mode="MarkdownV2")
+#     else:
+#         bot.reply_to(message, "❌ *Invalid command.* Use `/help` for available commands.", parse_mode="MarkdownV2")
 @bot.message_handler(func=lambda message: message.text.startswith('/'))
 
 def send_discord_notification(title, message):
