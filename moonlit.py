@@ -23,6 +23,8 @@ from rich.panel import Panel
 from rich.text import Text
 from email.mime.text import MIMEText
 from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
+from telebot.types import ReplyKeyboardMarkup, KeyboardButton
+
 
 console = Console()
 
@@ -75,56 +77,108 @@ def execute_command(command):
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
     logging.debug(f"Received /start from {message.chat.id}")
-    
+
     if str(message.chat.id) != TELEGRAM_ADMIN_ID:
-        bot.reply_to(message, "🚫 You are not authorized to use this bot.")
+        bot.reply_to(message, "🚫 *You are not authorized to use this bot.*", parse_mode="MarkdownV2")
         return
+
+    welcome_text = (
+        "🌙 *Welcome to MoonLit Admin Bot!*\n\n"
+        "🔧 *Your personal system administrator in Telegram\!* 🚀\n"
+        "💡 *Control your server securely from anywhere*\.\n\n"
+        "📌 *Features:* \n"
+        "✅ System Monitoring \n"
+        "✅ Server Control \n"
+        "✅ Log Checking \n"
+        "✅ Custom Command Execution \n\n"
+        "Use the buttons below or type `/help` for more commands\!"
+    )
+
+    keyboard = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=False)
+    keyboard.add(
+        KeyboardButton("📊 Check Status"),
+        KeyboardButton("📜 List Services")
+    )
+    keyboard.add(
+        KeyboardButton("💾 Disk Usage"),
+        KeyboardButton("🧠 Memory Usage")
+    )
+    keyboard.add(
+        KeyboardButton("🌐 Network Info"),
+        KeyboardButton("🔄 Update System")
+    )
+    keyboard.add(
+        KeyboardButton("⚠️ Restart"),
+        KeyboardButton("🔴 Shutdown")
+    )
+    keyboard.add(KeyboardButton("ℹ️ Help"), KeyboardButton("❓ About")) 
+
+    bot.send_message(message.chat.id, welcome_text, reply_markup=keyboard, parse_mode="MarkdownV2")
+@bot.message_handler(commands=['help'])
+
+@bot.message_handler(commands=['about'])
+def send_about(message):
+    logging.debug(f"Received /about from {message.chat.id}")
+
+    if str(message.chat.id) != TELEGRAM_ADMIN_ID:
+        bot.reply_to(message, "🚫 *You are not authorized to use this bot.*", parse_mode="MarkdownV2")
+        return
+
+    about_text = (
+        "❓ *About MoonLit Bot*\n\n"
+        "🌙 *MoonLit is a powerful Telegram bot designed for system monitoring and management\!* \n"
+        "🔧 It provides easy access to system commands, logs, and performance data\.\n"
+        "🛡️ Secure, reliable, and easy to use\.\n\n"
+        "💡 *Developed for system admins who want full control over their servers remotely\!* 🚀\n\n"
+        "📌 *Main Features:* \n"
+        "• 📊 System Monitoring\n"
+        "• 🖥️ Server Control\n"
+        "• 📜 Log Analysis\n"
+        "• ⚡ Quick Access to Linux Commands\n\n"
+        "🔗 *Project Maintainer:* `@YourUsername`\n"
+        "🌍 *Open Source Contribution:* [GitHub Repo](https://github.com/yourrepo)\n"
+        "📞 *Support:* [Telegram Group](https://t.me/yourgroup)"
+    )
+
+    bot.send_message(message.chat.id, about_text, parse_mode="MarkdownV2", disable_web_page_preview=True)
     
-    markup = InlineKeyboardMarkup()
-    markup.row_width = 2
-    markup.add(InlineKeyboardButton("📊 Check System Status", callback_data="status"),
-               InlineKeyboardButton("📜 List Services", callback_data="services"))
-    markup.add(InlineKeyboardButton("💾 Disk Usage", callback_data="disk"),
-               InlineKeyboardButton("🧠 Memory Usage", callback_data="memory"))
-    markup.add(InlineKeyboardButton("🌐 Network Info", callback_data="network"),
-               InlineKeyboardButton("🔄 Update System", callback_data="update"))
-    markup.add(InlineKeyboardButton("⚠️ Restart", callback_data="restart"),
-               InlineKeyboardButton("🔴 Shutdown", callback_data="shutdown")),
-    markup.add(InlineKeyboardButton("ℹ️ Help", callback_data="help"),
-               InlineKeyboardButton("Restart Bot", callback_data="start"))
-
-    bot.send_message(message.chat.id, "*🤖 Welcome to MoonLit Admin Bot!*\n"
-                                      "Select an option below:", reply_markup=markup)
-
 @bot.message_handler(commands=['help'])
 def send_help(message):
     logging.debug(f"Received /help from {message.chat.id}")
-    
+
     if str(message.chat.id) != TELEGRAM_ADMIN_ID:
-        bot.reply_to(message, "🚫 You are not authorized to use this bot.")
+        bot.reply_to(message, "🚫 *You are not authorized to use this bot.*", parse_mode="MarkdownV2")
         return
-    
+
     help_text = (
-        "📌 *Available Commands:*\n"
-        "• `/status` - Check system uptime\n"
-        "• `/restart` - Restart server\n"
-        "• `/update` - Update system\n"
-        "• `/shutdown` - Shutdown server\n"
-        "• `/services` - List running services\n"
-        "• `/disk` - Show disk usage\n"
-        "• `/memory` - Show memory usage\n"
-        "• `/network` - Show network info\n"
-        "• `/exec <command>` - Run custom command\n"
+        "ℹ️ *MoonLit Bot Commands*\n\n"
+        "📌 *System Monitoring Commands:*\n"
+        "• `/status` – Check system uptime 🕒\n"
+        "• `/services` – List running services 📜\n"
+        "• `/disk` – Show disk usage 💾\n"
+        "• `/memory` – Show memory usage 🧠\n"
+        "• `/network` – Show network info 🌐\n\n"
+        "⚙️ *System Control Commands:*\n"
+        "• `/update` – Update the system 🔄\n"
+        "• `/restart` – Restart the server ⚠️\n"
+        "• `/shutdown` – Shutdown the server 🔴\n\n"
+        "🛠 *Custom Execution:*\n"
+        "• `/exec <command>` – Run any Linux command ⚡\n\n"
+        "❓ *Other Commands:*\n"
+        "• `/help` – Show this help message ℹ️\n"
+        "• `/about` – About the bot ❓\n\n"
+        "• `/start` – Restart the bot if you encounter any problems \n\n"
+        "💡 *Use the buttons below or type a command!*"
     )
 
-    bot.send_message(message.chat.id, help_text)
-
+    bot.send_message(message.chat.id, help_text, parse_mode="MarkdownV2")
+    
 @bot.message_handler(func=lambda message: True)
 def handle_keyboard_buttons(message):
     user_id = str(message.chat.id)
 
     if user_id != TELEGRAM_ADMIN_ID:
-        bot.reply_to(message, "🚫 You are not authorized to use this bot.")
+        bot.reply_to(message, "🚫 *You are not authorized to use this bot.*", parse_mode="MarkdownV2")
         return
 
     command_map = {
@@ -137,26 +191,20 @@ def handle_keyboard_buttons(message):
         "⚠️ Restart": "restart",
         "🔴 Shutdown": "shutdown",
         "ℹ️ Help": "help",
-        "Restart Bot": "start"
+        "❓ About": "about"
     }
 
-    command = command_map.get(message.text) 
+    command = command_map.get(message.text)
 
-    if not command and message.text.startswith('/'):
-        command = message.text.lstrip('/')  
-
-    if command in ["status", "restart", "update", "shutdown", "services", "disk", "memory", "network"]:
+    if command == "help":
+        send_help(message)  # Call help function
+    elif command == "about":
+        send_about(message)  # Call about function
+    elif command in ["status", "restart", "update", "shutdown", "services", "disk", "memory", "network"]:
         response = execute_command(command)
         bot.send_message(message.chat.id, response, parse_mode="MarkdownV2")
-    
-    elif message.text.startswith("/exec "):
-        execute_custom_command(message)
-    
-    elif command == "help":
-        send_help(message)
-    
     else:
-        bot.reply_to(message, "❌ *Invalid command.* Use /help for available commands.")
+        bot.reply_to(message, "❌ *Invalid command.* Use the buttons below or `/help`.", parse_mode="MarkdownV2")
         
 @bot.callback_query_handler(func=lambda call: True)
 def handle_callback(call):
@@ -172,7 +220,6 @@ def handle_callback(call):
 
 @bot.message_handler(commands=['exec'])
 def execute_custom_command(message):
-    """Allows the admin to execute any Linux command."""
     user_id = str(message.chat.id)
 
     if user_id != TELEGRAM_ADMIN_ID:
@@ -185,7 +232,7 @@ def execute_custom_command(message):
         return
 
     try:
-        output = subprocess.run(command, shell=True, capture_output=True, text=True)
+        output = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=5)
         result = output.stdout if output.stdout else output.stderr
         bot.reply_to(message, f"✅ *Command Executed:*\n```\n{result[:1900]}\n```", parse_mode="MarkdownV2")
     except Exception as e:
