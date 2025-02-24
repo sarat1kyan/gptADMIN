@@ -224,7 +224,7 @@ def handle_callback(call):
 
 @bot.message_handler(commands=['exec'])
 def execute_custom_command(message):
-    """Allows the admin to execute any Linux command."""
+    """Executes a custom command entered by the admin."""
     user_id = str(message.chat.id)
 
     if user_id != TELEGRAM_ADMIN_ID:
@@ -232,6 +232,7 @@ def execute_custom_command(message):
         return
 
     command = message.text.replace("/exec", "").strip()
+
     if not command:
         bot.reply_to(message, "❌ *Please provide a command to execute.*\nExample:\n`/exec ls -lah`", parse_mode="MarkdownV2")
         return
@@ -239,7 +240,7 @@ def execute_custom_command(message):
     try:
         output = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=5)
         result = output.stdout if output.stdout else output.stderr
-        escaped_result = escape_markdown_v2(result[:1900])  # Escape MarkdownV2
+        escaped_result = escape_markdown_v2(result[:1900])  # Ensure safe MarkdownV2 formatting
 
         bot.reply_to(message, f"✅ *Command Executed:*\n```\n{escaped_result}\n```", parse_mode="MarkdownV2")
     except subprocess.TimeoutExpired:
@@ -250,7 +251,6 @@ def execute_custom_command(message):
 
 @bot.message_handler(func=lambda message: message.text.startswith('/') and not message.text.startswith('/exec'))
 def handle_command(message):
-    """Handles predefined system commands (except /exec)."""
     user_id = str(message.chat.id)
 
     if user_id != TELEGRAM_ADMIN_ID:
@@ -258,9 +258,11 @@ def handle_command(message):
         return
 
     command = message.text.lstrip("/")
+
     if command in ALLOWED_COMMANDS:
         response = execute_command(command)
         bot.reply_to(message, response, parse_mode="MarkdownV2")
+        
     else:
         bot.reply_to(message, "❌ *Invalid command.* Use `/help` for available commands.", parse_mode="MarkdownV2")
         
