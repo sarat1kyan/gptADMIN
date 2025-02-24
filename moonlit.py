@@ -90,6 +90,8 @@ def send_welcome(message):
                InlineKeyboardButton("🔄 Update System", callback_data="update"))
     markup.add(InlineKeyboardButton("⚠️ Restart", callback_data="restart"),
                InlineKeyboardButton("🔴 Shutdown", callback_data="shutdown"))
+    markup.add(InlineKeyboardButton("ℹ️ Help", callback_data="help"),
+               InlineKeyboardButton("Restart Bot", callback_data="start"))
 
     bot.send_message(message.chat.id, "*🤖 Welcome to MoonLit Admin Bot!*\n"
                                       "Select an option below:", reply_markup=markup)
@@ -117,6 +119,45 @@ def send_help(message):
 
     bot.send_message(message.chat.id, help_text)
 
+@bot.message_handler(func=lambda message: True)
+def handle_keyboard_buttons(message):
+    user_id = str(message.chat.id)
+
+    if user_id != TELEGRAM_ADMIN_ID:
+        bot.reply_to(message, "🚫 You are not authorized to use this bot.")
+        return
+
+    command_map = {
+        "📊 Check Status": "status",
+        "📜 List Services": "services",
+        "💾 Disk Usage": "disk",
+        "🧠 Memory Usage": "memory",
+        "🌐 Network Info": "network",
+        "🔄 Update System": "update",
+        "⚠️ Restart": "restart",
+        "🔴 Shutdown": "shutdown",
+        "ℹ️ Help": "help"
+        "Restart Bot": "start"
+    }
+
+    command = command_map.get(message.text) 
+
+    if not command and message.text.startswith('/'):
+        command = message.text.lstrip('/')  
+
+    if command in ["status", "restart", "update", "shutdown", "services", "disk", "memory", "network"]:
+        response = execute_command(command)
+        bot.send_message(message.chat.id, response, parse_mode="MarkdownV2")
+    
+    elif message.text.startswith("/exec "):
+        execute_custom_command(message)
+    
+    elif command == "help":
+        send_help(message)
+    
+    else:
+        bot.reply_to(message, "❌ *Invalid command.* Use /help for available commands.")
+        
 @bot.callback_query_handler(func=lambda call: True)
 def handle_callback(call):
     user_id = str(call.message.chat.id)
@@ -129,7 +170,9 @@ def handle_callback(call):
     response = execute_command(command)
     bot.send_message(call.message.chat.id, response)
 
+@bot.message_handler(commands=['exec'])
 def execute_custom_command(message):
+    """Allows the admin to execute any Linux command."""
     user_id = str(message.chat.id)
 
     if user_id != TELEGRAM_ADMIN_ID:
@@ -138,16 +181,16 @@ def execute_custom_command(message):
 
     command = message.text.replace("/exec", "").strip()
     if not command:
-        bot.reply_to(message, "❌ Please provide a command to execute. Example:\n/exec ls -lah")
+        bot.reply_to(message, "❌ *Please provide a command to execute.*\nExample:\n`/exec ls -lah`", parse_mode="MarkdownV2")
         return
 
     try:
         output = subprocess.run(command, shell=True, capture_output=True, text=True)
         result = output.stdout if output.stdout else output.stderr
-        bot.reply_to(message, f"✅ Command executed:\n```{result[:1900]}```")  # Telegram message limit
+        bot.reply_to(message, f"✅ *Command Executed:*\n```\n{result[:1900]}\n```", parse_mode="MarkdownV2")
     except Exception as e:
-        bot.reply_to(message, f"❌ Error executing command: {e}")
-
+        bot.reply_to(message, f"❌ *Error executing command:* `{e}`")
+        
 @bot.message_handler(func=lambda message: message.text.startswith('/'))
 def handle_command(message):
     """Handles predefined system commands."""
