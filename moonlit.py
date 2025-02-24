@@ -76,43 +76,41 @@ def execute_command(command):
         return f"❌ Error executing {command}: {e}"
 
 @bot.message_handler(commands=['start'])
-def send_welcome(message):
-    bot.reply_to(message, "🤖 MoonLit Bot is running!\nUse /help for available commands.")
+def start_telegram_bot():
+    """Starts the Telegram bot in a separate thread."""
+    @bot.message_handler(commands=['start'])
+    def send_welcome(message):
+        bot.reply_to(message, "🤖 GPTAdmin Bot is running!\nUse /help for available commands.")
 
-@bot.message_handler(commands=['help'])
-def send_help(message):
-    bot.reply_to(message, "📌 Available Commands:\n"
-                          "/status - Check system uptime\n"
-                          "/restart - Restart server\n"
-                          "/update - Update system\n"
-                          "/shutdown - Shutdown server\n"
-                          "/services - List running services\n"
-                          "/disk - Show disk usage\n"
-                          "/memory - Show memory usage\n"
-                          "/network - Show network info\n"
-                          "/exec <command> - Run custom command")
+    @bot.message_handler(commands=['help'])
+    def send_help(message):
+        bot.reply_to(message, "📌 Available Commands:\n"
+                              "/status - Check system uptime\n"
+                              "/restart - Restart server\n"
+                              "/update - Update system\n"
+                              "/shutdown - Shutdown server\n"
+                              "/exec <command> - Run custom command")
 
-@bot.message_handler(commands=['exec'])
-def execute_custom_command(message):
-    user_id = str(message.chat.id)
+    @bot.message_handler(commands=['exec'])
+    def execute_custom_command(message):
+        """Allows the admin to execute any Linux command."""
+        user_id = str(message.chat.id)
 
-    if user_id != TELEGRAM_ADMIN_ID:
-        bot.reply_to(message, "🚫 You are not authorized to run this command.")
-        return
+        if user_id != TELEGRAM_ADMIN_ID:
+            bot.reply_to(message, "🚫 You are not authorized to run this command.")
+            return
 
-    command = message.text.replace("/exec", "").strip()
-    if not command:
-        bot.reply_to(message, "❌ Please provide a command to execute. Example:\n/exec ls -lah")
-        return
+        command = message.text.replace("/exec", "").strip()
+        if not command:
+            bot.reply_to(message, "❌ Please provide a command to execute. Example:\n/exec ls -lah")
+            return
 
-    try:
-        logging.info(f"Executing custom command: {command}")
-        output = subprocess.run(command, shell=True, capture_output=True, text=True)
-        result = output.stdout if output.stdout else output.stderr
-        bot.reply_to(message, f"✅ Command executed:\n```{result[:1900]}```")  # Telegram message limit
-    except Exception as e:
-        logging.error(f"Error executing custom command: {e}")
-        bot.reply_to(message, f"❌ Error executing command: {e}")
+        try:
+            output = subprocess.run(command, shell=True, capture_output=True, text=True)
+            result = output.stdout if output.stdout else output.stderr
+            bot.reply_to(message, f"✅ Command executed:\n```{result[:1900]}```")  # Telegram message limit
+        except Exception as e:
+            bot.reply_to(message, f"❌ Error executing command: {e}")
 
 @bot.message_handler(func=lambda message: True)
 def handle_command(message):
