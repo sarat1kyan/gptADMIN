@@ -22,6 +22,7 @@ from rich.prompt import Prompt
 from rich.panel import Panel
 from rich.text import Text
 from email.mime.text import MIMEText
+from telebot.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 console = Console()
 
@@ -74,23 +75,60 @@ def execute_command(command):
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
     logging.debug(f"Received /start from {message.chat.id}")
-    bot.reply_to(message, "🤖 GPTAdmin Bot is running! Use /help for available commands.")
+    
+    if str(message.chat.id) != TELEGRAM_ADMIN_ID:
+        bot.reply_to(message, "🚫 You are not authorized to use this bot.")
+        return
+    
+    markup = InlineKeyboardMarkup()
+    markup.row_width = 2
+    markup.add(InlineKeyboardButton("📊 Check System Status", callback_data="status"),
+               InlineKeyboardButton("📜 List Services", callback_data="services"))
+    markup.add(InlineKeyboardButton("💾 Disk Usage", callback_data="disk"),
+               InlineKeyboardButton("🧠 Memory Usage", callback_data="memory"))
+    markup.add(InlineKeyboardButton("🌐 Network Info", callback_data="network"),
+               InlineKeyboardButton("🔄 Update System", callback_data="update"))
+    markup.add(InlineKeyboardButton("⚠️ Restart", callback_data="restart"),
+               InlineKeyboardButton("🔴 Shutdown", callback_data="shutdown"))
+
+    bot.send_message(message.chat.id, "*🤖 Welcome to MoonLit Admin Bot!*\n"
+                                      "Select an option below:", reply_markup=markup)
 
 @bot.message_handler(commands=['help'])
 def send_help(message):
     logging.debug(f"Received /help from {message.chat.id}")
-    bot.reply_to(message, "📌 Available Commands:\n"
-                          "/status - Check system uptime\n"
-                          "/restart - Restart server\n"
-                          "/update - Update system\n"
-                          "/shutdown - Shutdown server\n"
-                          "/services - List running services\n"
-                          "/disk - Show disk usage\n"
-                          "/memory - Show memory usage\n"
-                          "/network - Show network info\n"
-                          "/exec <command> - Run custom command")
+    
+    if str(message.chat.id) != TELEGRAM_ADMIN_ID:
+        bot.reply_to(message, "🚫 You are not authorized to use this bot.")
+        return
+    
+    help_text = (
+        "📌 *Available Commands:*\n"
+        "• `/status` - Check system uptime\n"
+        "• `/restart` - Restart server\n"
+        "• `/update` - Update system\n"
+        "• `/shutdown` - Shutdown server\n"
+        "• `/services` - List running services\n"
+        "• `/disk` - Show disk usage\n"
+        "• `/memory` - Show memory usage\n"
+        "• `/network` - Show network info\n"
+        "• `/exec <command>` - Run custom command\n"
+    )
 
-@bot.message_handler(commands=['exec'])
+    bot.send_message(message.chat.id, help_text)
+
+@bot.callback_query_handler(func=lambda call: True)
+def handle_callback(call):
+    user_id = str(call.message.chat.id)
+
+    if user_id != TELEGRAM_ADMIN_ID:
+        bot.answer_callback_query(call.id, "🚫 You are not authorized!")
+        return
+
+    command = call.data
+    response = execute_command(command)
+    bot.send_message(call.message.chat.id, response)
+
 def execute_custom_command(message):
     user_id = str(message.chat.id)
 
