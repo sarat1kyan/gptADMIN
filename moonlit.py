@@ -92,7 +92,7 @@ def send_welcome(message):
         "✅ Server Control \n"
         "✅ Log Checking \n"
         "✅ Custom Command Execution \n\n"
-        "Use the buttons below or type /help for more commands\"
+        "Use the buttons below or type /help for more commands"
     )
 
     keyboard = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=False)
@@ -169,7 +169,7 @@ def send_help(message):
         "❓ *Other Commands:*\n"
         "• `/help` – Show this help message ℹ️\n"
         "• `/about` – About the bot ❓\n\n"
-        "💡 *Use the buttons below or type a command\*"
+        "💡 *Use the buttons below or type a command*"
     )
 
     bot.send_message(message.chat.id, help_text, parse_mode="MarkdownV2")
