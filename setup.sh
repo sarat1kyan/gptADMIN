@@ -126,7 +126,7 @@ esac
 echo -e "${GREEN}[SUCCESS] Required system packages installed.${RESET}"
 divider
 
-REQUIRED_PYTHON_PACKAGES=(os openai requests json subprocess platform psutil logging smtplib notify2 shlex rich telebot backoff plyer time re threading)
+REQUIRED_PYTHON_PACKAGES=(os openai requests json subprocess platform psutil logging smtplib notify2 shlex rich telebot backoff plyer time re threading pyTelegramBotAPI)
 echo -e "${YELLOW}[INFO] Checking and installing Python packages...${RESET}"
 for pkg in "${REQUIRED_PYTHON_PACKAGES[@]}"; do
     if ! python3 -c "import $pkg" &> /dev/null; then
