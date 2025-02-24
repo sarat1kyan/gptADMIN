@@ -89,7 +89,7 @@ def send_welcome(message):
     markup.add(InlineKeyboardButton("🌐 Network Info", callback_data="network"),
                InlineKeyboardButton("🔄 Update System", callback_data="update"))
     markup.add(InlineKeyboardButton("⚠️ Restart", callback_data="restart"),
-               InlineKeyboardButton("🔴 Shutdown", callback_data="shutdown"))
+               InlineKeyboardButton("🔴 Shutdown", callback_data="shutdown")),
     markup.add(InlineKeyboardButton("ℹ️ Help", callback_data="help"),
                InlineKeyboardButton("Restart Bot", callback_data="start"))
 
@@ -136,7 +136,7 @@ def handle_keyboard_buttons(message):
         "🔄 Update System": "update",
         "⚠️ Restart": "restart",
         "🔴 Shutdown": "shutdown",
-        "ℹ️ Help": "help"
+        "ℹ️ Help": "help",
         "Restart Bot": "start"
     }
 
