@@ -7,7 +7,8 @@ import logging
 import json
 import smtplib
 import psutil
-#import notify2
+import telebot
+import threading
 from datetime import datetime
 from plyer import notification
 import shlex
@@ -35,6 +36,100 @@ client = openai.OpenAI()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 with open('config.json') as f:
     config = json.load(f)
+
+TELEGRAM_BOT_TOKEN = config["telegram_bot_token"]
+TELEGRAM_ADMIN_ID = str(config["telegram_admin_id"])
+ALLOWED_COMMANDS = config.get("allowed_commands", [])
+LOG_FILE = "/var/log/MoonLit_commands.log"
+
+bot = telebot.TeleBot(TELEGRAM_BOT_TOKEN)
+
+def execute_command(command):
+    try:
+        logging.info(f"Executing command: {command}")
+        
+        if command == "status":
+            output = subprocess.run("uptime", shell=True, capture_output=True, text=True)
+        elif command == "restart":
+            output = subprocess.run("sudo reboot", shell=True, capture_output=True, text=True)
+            return "🔄 System is restarting..."
+        elif command == "update":
+            output = subprocess.run("sudo apt update && sudo apt upgrade -y", shell=True, capture_output=True, text=True)
+        elif command == "shutdown":
+            output = subprocess.run("sudo shutdown -h now", shell=True, capture_output=True, text=True)
+            return "⚠️ System is shutting down..."
+        elif command == "services":
+            output = subprocess.run("systemctl list-units --type=service --state=running", shell=True, capture_output=True, text=True)
+        elif command == "disk":
+            output = subprocess.run("df -h", shell=True, capture_output=True, text=True)
+        elif command == "memory":
+            output = subprocess.run("free -m", shell=True, capture_output=True, text=True)
+        elif command == "network":
+            output = subprocess.run("ip a", shell=True, capture_output=True, text=True)
+        else:
+            return "❌ Unknown command."
+
+        return f"✅ Command executed:\n```{output.stdout[:1900]}```"  # Telegram messages max 2000 chars
+
+    except Exception as e:
+        logging.error(f"Error executing {command}: {e}")
+        return f"❌ Error executing {command}: {e}"
+
+@bot.message_handler(commands=['start'])
+def send_welcome(message):
+    bot.reply_to(message, "🤖 MoonLit Bot is running!\nUse /help for available commands.")
+
+@bot.message_handler(commands=['help'])
+def send_help(message):
+    bot.reply_to(message, "📌 Available Commands:\n"
+                          "/status - Check system uptime\n"
+                          "/restart - Restart server\n"
+                          "/update - Update system\n"
+                          "/shutdown - Shutdown server\n"
+                          "/services - List running services\n"
+                          "/disk - Show disk usage\n"
+                          "/memory - Show memory usage\n"
+                          "/network - Show network info\n"
+                          "/exec <command> - Run custom command")
+
+@bot.message_handler(commands=['exec'])
+def execute_custom_command(message):
+    user_id = str(message.chat.id)
+
+    if user_id != TELEGRAM_ADMIN_ID:
+        bot.reply_to(message, "🚫 You are not authorized to run this command.")
+        return
+
+    command = message.text.replace("/exec", "").strip()
+    if not command:
+        bot.reply_to(message, "❌ Please provide a command to execute. Example:\n/exec ls -lah")
+        return
+
+    try:
+        logging.info(f"Executing custom command: {command}")
+        output = subprocess.run(command, shell=True, capture_output=True, text=True)
+        result = output.stdout if output.stdout else output.stderr
+        bot.reply_to(message, f"✅ Command executed:\n```{result[:1900]}```")  # Telegram message limit
+    except Exception as e:
+        logging.error(f"Error executing custom command: {e}")
+        bot.reply_to(message, f"❌ Error executing command: {e}")
+
+@bot.message_handler(func=lambda message: True)
+def handle_command(message):
+    user_id = str(message.chat.id)
+
+    if user_id != TELEGRAM_ADMIN_ID:
+        bot.reply_to(message, "🚫 You are not authorized to run this command.")
+        return
+
+    command = message.text.lstrip("/")
+    if command in ALLOWED_COMMANDS:
+        response = execute_command(command)
+        bot.reply_to(message, response)
+    else:
+        bot.reply_to(message, "❌ Invalid command. Use /help for available commands.")
+
+bot.polling()
 
 def is_headless():
     return not os.getenv("DISPLAY") and not os.getenv("DBUS_SESSION_BUS_ADDRESS")
@@ -100,15 +195,16 @@ def display_menu():
     table.add_column("Option", justify="center", style="cyan")
     table.add_column("Description", justify="left")
     table.add_row("1", "Monitor System Logs for Errors")
-    table.add_row("2", "View Error History")
-    table.add_row("3", "Check System Diagnostics")
-    table.add_row("4", "Adjust Settings")
-    table.add_row("5", "Check for Assistant Updates")
-    table.add_row("6", "Exit")
+    table.add_row("2", "Start Telegram Remote Control")
+    table.add_row("3", "View Error History")
+    table.add_row("4", "Check System Diagnostics")
+    table.add_row("5", "Adjust Settings")
+    table.add_row("6", "Check for Assistant Updates")
+    table.add_row("7", "Exit")
 
     console.print(table)
 
-    choice = Prompt.ask("Select an option", choices=["1", "2", "3", "4", "5", "6"], default="1")
+    choice = Prompt.ask("Select an option", choices=["1", "2", "3", "4", "5", "6", "7"], default="7")
     return choice
 
 #def monitor_logs():
@@ -514,15 +610,20 @@ if __name__ == "__main__":
 
         if choice == "1":
             monitor_logs()
+            console.print("[yellow]Feature coming soon.[/yellow]")
         elif choice == "2":
-            console.print("[yellow]View Error History: Feature coming soon.[/yellow]")
-            show_history()
+            telegram_thread = threading.Thread(target=start_telegram_bot)
+            telegram_thread.start()
+            console.print("[yellow]Controll your server via Telegram[/yellow]")
         elif choice == "3":
-            gather_diagnostics()
+            console.print("[yellow]View Error History[/yellow]")
+            show_history()
         elif choice == "4":
-            console.print("[yellow]Settings feature coming soon![/yellow]")
+            gather_diagnostics()
         elif choice == "5":
-            check_for_updates()
+            console.print("[yellow]Settings can be changed also from config.json[/yellow]")
         elif choice == "6":
+            check_for_updates()
+        elif choice == "7":
             console.print("[green]Exiting AI Assistant.[/green]")
             break
