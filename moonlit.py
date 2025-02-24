@@ -262,7 +262,6 @@ def escape_markdown_v2(text):
 
 @bot.message_handler(commands=['exec'])
 def execute_custom_command(message):
-    """Handles command execution securely with user confirmation."""
     user_id = str(message.chat.id)
 
     if user_id != TELEGRAM_ADMIN_ID:
@@ -276,23 +275,37 @@ def execute_custom_command(message):
         return
 
     for restricted in RESTRICTED_COMMANDS:
-        if command.startswith(restricted):
-            bot.reply_to(message, f"⚠️ *Command `{restricted}` is blocked for security reasons!*", parse_mode="MarkdownV2")
+        if restricted in command:
+            bot.reply_to(message, f"⚠️ *Command is blocked for security reasons:* `{restricted}`", parse_mode="MarkdownV2")
             return
 
-    confirm_keyboard = InlineKeyboardMarkup()
-    confirm_keyboard.add(
-        InlineKeyboardButton("✅ Run", callback_data=f"exec_run:{command}"),
-        InlineKeyboardButton("❌ Cancel", callback_data="exec_cancel")
-    )
+    try:
+        output = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=10)
+        result = output.stdout if output.stdout else output.stderr
 
-    bot.send_message(
-        message.chat.id, 
-        f"⚠️ *Confirm Execution:* `{escape_markdown_v2(command)}`", 
-        parse_mode="MarkdownV2", 
-        reply_markup=confirm_keyboard
-    )
+        if not result.strip():
+            result = "✅ *Command executed successfully, but no output was returned.*"
 
+        escaped_result = escape_markdown_v2(result)
+
+        response_message = f"✅ *Command Executed:*\n```\n{escaped_result[:1900]}\n```"
+
+        # Send result as text or a file if too long
+        if len(escaped_result) > 1900:
+            log_filename = f"command_output_{int(time.time())}.txt"
+            with open(log_filename, "w") as log_file:
+                log_file.write(result)
+            with open(log_filename, "rb") as log_file:
+                bot.send_document(message.chat.id, log_file, caption="📄 Full command output")
+            os.remove(log_filename)
+        else:
+            bot.send_message(message.chat.id, response_message, parse_mode="MarkdownV2")
+
+    except subprocess.TimeoutExpired:
+        bot.send_message(message.chat.id, "❌ *Command timed out after 10 seconds.*", parse_mode="MarkdownV2")
+    except Exception as e:
+        bot.send_message(message.chat.id, f"❌ *Error executing command:* `{escape_markdown_v2(str(e))}`", parse_mode="MarkdownV2")
+        
 @bot.callback_query_handler(func=lambda call: call.data.startswith("exec_run:") or call.data == "exec_cancel")
 def confirm_execution(call):
     """Handles execution confirmation and executes the command securely."""
