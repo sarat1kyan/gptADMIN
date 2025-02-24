@@ -73,13 +73,13 @@ def send_discord_notification(title, message):
             return
 
         payload = {
-            "username": "gptADMIN",
+            "username": "MoonLit",
             "embeds": [
                 {
                     "title": title,
                     "description": message,
                     "color": 5814783, 
-                    "footer": {"text": "Sent by gptADMIN"}
+                    "footer": {"text": "Sent by MoonLit"}
                 }
             ]
         }
