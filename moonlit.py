@@ -220,85 +220,6 @@ def handle_callback(call):
     response = execute_command(command)
     bot.send_message(call.message.chat.id, response)
 
-def escape_markdown_v2(text):
-    return re.sub(r'([_*\[\]()~`>#+-=|{}.!])', r'\\\1', text)
-
-@bot.message_handler(commands=['exec'])
-def execute_custom_command(message):
-    user_id = str(message.chat.id)
-
-    if user_id != TELEGRAM_ADMIN_ID:
-        bot.reply_to(message, "🚫 *You are not authorized to run this command.*", parse_mode="MarkdownV2")
-        return
-
-    command = message.text.replace("/exec", "").strip()
-
-    if not command:
-        bot.reply_to(message, "❌ *Please provide a command to execute.*\nExample:\n`/exec ls -lah`", parse_mode="MarkdownV2")
-        return
-
-    # Prevent execution of dangerous commands
-    for restricted in RESTRICTED_COMMANDS:
-        if restricted in command:
-            bot.reply_to(message, f"⚠️ *Command is blocked for security reasons:* `{restricted}`", parse_mode="MarkdownV2")
-            return
-
-    # Confirm execution before proceeding
-    confirm_keyboard = InlineKeyboardMarkup()
-    confirm_keyboard.add(
-        InlineKeyboardButton("✅ Run", callback_data=f"exec_run:{command}"),
-        InlineKeyboardButton("❌ Cancel", callback_data="exec_cancel")
-    )
-
-    bot.send_message(message.chat.id, f"⚠️ *Confirm Execution:* `{escape_markdown_v2(command)}`", 
-                     parse_mode="MarkdownV2", reply_markup=confirm_keyboard)
-
-@bot.callback_query_handler(func=lambda call: call.data.startswith("exec_run:") or call.data == "exec_cancel")
-def confirm_execution(call):
-    """Handles the execution confirmation buttons."""
-    user_id = str(call.message.chat.id)
-
-    if user_id != TELEGRAM_ADMIN_ID:
-        bot.answer_callback_query(call.id, "🚫 You are not authorized!")
-        return
-
-    if call.data == "exec_cancel":
-        bot.answer_callback_query(call.id, "❌ Command execution canceled.")
-        bot.edit_message_text("❌ *Execution Canceled.*", chat_id=call.message.chat.id, 
-                              message_id=call.message.message_id, parse_mode="MarkdownV2")
-        return
-
-    command = call.data.replace("exec_run:", "")
-
-    bot.answer_callback_query(call.id, "✅ Running command...")
-
-    try:
-        start_time = time.time()
-        output = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=10)
-        duration = time.time() - start_time
-
-        result = output.stdout if output.stdout else output.stderr
-        escaped_result = escape_markdown_v2(result)
-
-        response_message = f"✅ *Command Executed in {duration:.2f}s:*\n```\n{escaped_result[:1900]}\n```"
-
-        if len(escaped_result) > 1900:  # If output is too long, send as a file
-            log_filename = f"command_output_{int(time.time())}.txt"
-            with open(log_filename, "w") as log_file:
-                log_file.write(result)
-            with open(log_filename, "rb") as log_file:
-                bot.send_document(call.message.chat.id, log_file, caption="📄 Full command output")
-            os.remove(log_filename)
-        else:
-            bot.send_message(call.message.chat.id, response_message, parse_mode="MarkdownV2")
-
-    except subprocess.TimeoutExpired:
-        bot.send_message(call.message.chat.id, "❌ *Command timed out after 10 seconds.*", parse_mode="MarkdownV2")
-    except Exception as e:
-        bot.send_message(call.message.chat.id, f"❌ *Error executing command:* `{escape_markdown_v2(str(e))}`", parse_mode="MarkdownV2")
-
-    bot.edit_message_text(f"✅ *Command Executed:* `{escape_markdown_v2(command)}`", 
-                          chat_id=call.message.chat.id, message_id=call.message.message_id, parse_mode="MarkdownV2")
 
         
 def start_telegram_bot():
@@ -330,8 +251,89 @@ if not openai.api_key:
     console.print("[red]OpenAI API key not found. Please set the OPENAI_API_KEY environment variable.[/red]")
     raise ValueError("OpenAI API key not found. Please set the OPENAI_API_KEY environment variable.")
 
-import requests
-import json
+def escape_markdown_v2(text):
+    """Escapes Telegram MarkdownV2 special characters."""
+    escape_chars = r"_*[]()~`>#+-=|{}.!"
+    return "".join(f"\\{char}" if char in escape_chars else char for char in text)
+
+@bot.message_handler(commands=['exec'])
+def execute_custom_command(message):
+    """Handles command execution securely with user confirmation."""
+    user_id = str(message.chat.id)
+
+    if user_id != TELEGRAM_ADMIN_ID:
+        bot.reply_to(message, "🚫 *You are not authorized to run this command.*", parse_mode="MarkdownV2")
+        return
+
+    command = message.text.replace("/exec", "").strip()
+
+    if not command:
+        bot.reply_to(message, "❌ *Please provide a command to execute.*\nExample:\n`/exec ls -lah`", parse_mode="MarkdownV2")
+        return
+
+    for restricted in RESTRICTED_COMMANDS:
+        if command.startswith(restricted):
+            bot.reply_to(message, f"⚠️ *Command `{restricted}` is blocked for security reasons!*", parse_mode="MarkdownV2")
+            return
+
+    confirm_keyboard = InlineKeyboardMarkup()
+    confirm_keyboard.add(
+        InlineKeyboardButton("✅ Run", callback_data=f"exec_run:{command}"),
+        InlineKeyboardButton("❌ Cancel", callback_data="exec_cancel")
+    )
+
+    bot.send_message(
+        message.chat.id, 
+        f"⚠️ *Confirm Execution:* `{escape_markdown_v2(command)}`", 
+        parse_mode="MarkdownV2", 
+        reply_markup=confirm_keyboard
+    )
+
+@bot.callback_query_handler(func=lambda call: call.data.startswith("exec_run:") or call.data == "exec_cancel")
+def confirm_execution(call):
+    """Handles execution confirmation and executes the command securely."""
+    user_id = str(call.message.chat.id)
+
+    if user_id != TELEGRAM_ADMIN_ID:
+        bot.answer_callback_query(call.id, "🚫 You are not authorized!")
+        return
+
+    if call.data == "exec_cancel":
+        bot.answer_callback_query(call.id, "❌ Command execution canceled.")
+        bot.edit_message_text("❌ *Execution Canceled.*", chat_id=call.message.chat.id, 
+                              message_id=call.message.message_id, parse_mode="MarkdownV2")
+        return
+
+    command = call.data.replace("exec_run:", "")
+    bot.answer_callback_query(call.id, "✅ Running command...")
+
+    try:
+        start_time = time.time()
+        output = subprocess.run(shlex.split(command), shell=False, capture_output=True, text=True, timeout=10)
+        duration = time.time() - start_time
+
+        result = output.stdout if output.stdout else output.stderr
+        escaped_result = escape_markdown_v2(result)
+
+        response_message = f"✅ *Command Executed in {duration:.2f}s:*\n```\n{escaped_result[:1900]}\n```"
+
+        if len(escaped_result) > 1900:  # If output is too long, send as a file
+            log_filename = f"command_output_{int(time.time())}.txt"
+            with open(log_filename, "w") as log_file:
+                log_file.write(result)
+            with open(log_filename, "rb") as log_file:
+                bot.send_document(call.message.chat.id, log_file, caption="📄 Full command output")
+            os.remove(log_filename)
+        else:
+            bot.send_message(call.message.chat.id, response_message, parse_mode="MarkdownV2")
+
+    except subprocess.TimeoutExpired:
+        bot.send_message(call.message.chat.id, "❌ *Command timed out after 10 seconds.*", parse_mode="MarkdownV2")
+    except Exception as e:
+        bot.send_message(call.message.chat.id, f"❌ *Error executing command:* `{escape_markdown_v2(str(e))}`", parse_mode="MarkdownV2")
+
+    bot.edit_message_text(f"✅ *Command Executed:* `{escape_markdown_v2(command)}`", 
+                          chat_id=call.message.chat.id, message_id=call.message.message_id, parse_mode="MarkdownV2")
 
 @bot.message_handler(func=lambda message: message.text.startswith('/'))
 def handle_command(message):
@@ -344,7 +346,7 @@ def handle_command(message):
 
     command = message.text.lstrip("/").split()[0]  # Extract only the first part of the command
 
-    if command in ALLOWED_COMMANDS:
+    if command in ["status", "restart", "update", "shutdown", "services", "disk", "memory", "network"]:
         try:
             response = execute_command(command)
             bot.reply_to(message, f"✅ *Command Executed:* \n```\n{escape_markdown_v2(response[:1900])}\n```",
@@ -353,7 +355,7 @@ def handle_command(message):
             bot.reply_to(message, f"❌ *Error executing command:* `{escape_markdown_v2(str(e))}`", parse_mode="MarkdownV2")
     else:
         bot.reply_to(message, "❌ *Invalid command.* Use `/help` for available commands.", parse_mode="MarkdownV2")
-        
+
 def send_discord_notification(title, message):
 
     try:
