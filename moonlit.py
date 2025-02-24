@@ -224,6 +224,7 @@ def handle_callback(call):
 
 @bot.message_handler(commands=['exec'])
 def execute_custom_command(message):
+    """Allows the admin to execute any Linux command."""
     user_id = str(message.chat.id)
 
     if user_id != TELEGRAM_ADMIN_ID:
@@ -236,10 +237,9 @@ def execute_custom_command(message):
         return
 
     try:
-        output = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=5)
+        output = subprocess.run(command, shell=True, capture_output=True, text=True)
         result = output.stdout if output.stdout else output.stderr
-        escaped_result = escape_markdown_v2(result[:1900])
-        bot.reply_to(message, f"✅ *Command Executed:*\n```\n{escaped_result}\n```", parse_mode="MarkdownV2")
+        bot.reply_to(message, f"✅ *Command Executed:*\n```\n{result[:1900]}\n```", parse_mode="MarkdownV2")
     except Exception as e:
         bot.reply_to(message, f"❌ *Error executing command:* `{e}`")
         
