@@ -224,7 +224,7 @@ def handle_callback(call):
 
 @bot.message_handler(commands=['exec'])
 def execute_custom_command(message):
-    """Executes a custom command entered by the admin."""
+    """Allows the admin to execute a Linux command with a timeout to prevent hangs."""
     user_id = str(message.chat.id)
 
     if user_id != TELEGRAM_ADMIN_ID:
@@ -232,22 +232,30 @@ def execute_custom_command(message):
         return
 
     command = message.text.replace("/exec", "").strip()
-
     if not command:
         bot.reply_to(message, "❌ *Please provide a command to execute.*\nExample:\n`/exec ls -lah`", parse_mode="MarkdownV2")
         return
 
     try:
+        # ✅ Run the command with a 5-second timeout
         output = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=5)
         result = output.stdout if output.stdout else output.stderr
-        escaped_result = escape_markdown_v2(result[:1900])  # Ensure safe MarkdownV2 formatting
 
-        bot.reply_to(message, f"✅ *Command Executed:*\n```\n{escaped_result}\n```", parse_mode="MarkdownV2")
+        # ✅ Format the response for Telegram
+        formatted_output = (
+            f"✅ *Command Executed:*\n"
+            f"`{command}`\n\n"
+            f"📜 *Output:*\n"
+            f"```\n{result[:1900]}\n```"  # Limit output length
+        )
+        
+        bot.reply_to(message, formatted_output, parse_mode="MarkdownV2")
+    
     except subprocess.TimeoutExpired:
-        bot.reply_to(message, "❌ *Command timed out after 5 seconds.*", parse_mode="MarkdownV2")
+        bot.reply_to(message, "⏳ *Command took too long and was stopped.*", parse_mode="MarkdownV2")
+    
     except Exception as e:
-        bot.reply_to(message, f"❌ *Error executing command:* `{escape_markdown_v2(str(e))}`", parse_mode="MarkdownV2")
-
+        bot.reply_to(message, f"❌ *Error executing command:* `{e}`", parse_mode="MarkdownV2")
 
 @bot.message_handler(func=lambda message: message.text.startswith('/') and not message.text.startswith('/exec'))
 def handle_command(message):
