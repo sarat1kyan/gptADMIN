@@ -335,21 +335,25 @@ import json
 
 @bot.message_handler(func=lambda message: message.text.startswith('/'))
 def handle_command(message):
-    """Handles predefined system commands."""
+    """Handles predefined system commands securely."""
     user_id = str(message.chat.id)
 
     if user_id != TELEGRAM_ADMIN_ID:
-        bot.reply_to(message, "🚫 You are not authorized to run this command.")
+        bot.reply_to(message, "🚫 *You are not authorized to run this command.*", parse_mode="MarkdownV2")
         return
 
-    command = message.text.lstrip("/")
+    command = message.text.lstrip("/").split()[0]  # Extract only the first part of the command
 
     if command in ALLOWED_COMMANDS:
-        response = execute_command(command)
-        bot.reply_to(message, response)
+        try:
+            response = execute_command(command)
+            bot.reply_to(message, f"✅ *Command Executed:* \n```\n{escape_markdown_v2(response[:1900])}\n```",
+                         parse_mode="MarkdownV2")
+        except Exception as e:
+            bot.reply_to(message, f"❌ *Error executing command:* `{escape_markdown_v2(str(e))}`", parse_mode="MarkdownV2")
     else:
-        bot.reply_to(message, "❌ Invalid command. Use /help for available commands.")
-
+        bot.reply_to(message, "❌ *Invalid command.* Use `/help` for available commands.", parse_mode="MarkdownV2")
+        
 def send_discord_notification(title, message):
 
     try:
