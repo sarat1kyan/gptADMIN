@@ -126,7 +126,7 @@ esac
 echo -e "${GREEN}[SUCCESS] Required system packages installed.${RESET}"
 divider
 
-REQUIRED_PYTHON_PACKAGES=(openai requests psutil rich smtplib backoff shlex plyer json re subprocess)
+REQUIRED_PYTHON_PACKAGES=(os openai requests json subprocess platform psutil logging smtplib notify2 shlex rich telebot backoff plyer time re threading)
 echo -e "${YELLOW}[INFO] Checking and installing Python packages...${RESET}"
 for pkg in "${REQUIRED_PYTHON_PACKAGES[@]}"; do
     if ! python3 -c "import $pkg" &> /dev/null; then
@@ -143,7 +143,7 @@ echo -e "${CYAN}${BOLD}Configuration Setup${RESET}"
 divider
 
 while [[ -z "$api_key" ]]; do
-    read -p $' \e[36mEnter your OpenAI API key: \e[0m' api_key
+    read -p $' \e[36mEnter your OpenAI API key (optional, write NULL to skip): \e[0m' api_key
     if [[ -z "$api_key" ]]; then
         echo -e "${RED}[ERROR] OpenAI API Key cannot be empty!${RESET}"
     fi
@@ -153,11 +153,31 @@ echo "export OPENAI_API_KEY=$api_key" >> ~/.bashrc
 source ~/.bashrc
 
 read -p $' \e[36mEnter your Discord Webhook URL (optional, press enter to skip): \e[0m' discord_webhook_url
+read -p $' \e[36mEnter your Telegram Bot Token (optional, press enter to skip): \e[0m' telegram_bot_token
+read -p $' \e[36mEnter your Telegram Admin ID (optional, press enter to skip): \e[0m' telegram_admin_id
+read -p $' \e[36mEnter your email (used for alerts) (optional, write NULL to skip): \e[0m' admin_email
+read -p $' \e[36mEnter your email (used for alerts) (optional, press enter to skip): \e[0m' admin_email
+read -p $' \e[36mEnter your SMTP server (e.g., smtp.gmail.com) (optional, press enter to skip): \e[0m' smtp_server
 
-read -p $' \e[36mEnter your email (used for alerts): \e[0m' admin_email
-read -p $' \e[36mEnter your SMTP server (e.g., smtp.gmail.com): \e[0m' smtp_server
-read -p $' \e[36mEnter your SMTP port (e.g., 587 for TLS, 465 for SSL): \e[0m' smtp_port
-read -p $' \e[36mUse TLS? (yes/no): \e[0m' use_tls
+while true; do
+    read -p $' \e[36mEnter your SMTP port (e.g., 587 for TLS, 465 for SSL, or 0 to skip): \e[0m' smtp_port
+    if [[ "$smtp_port" =~ ^[0-9]+$ ]]; then
+        break
+    else
+        echo -e "${RED}[ERROR] Invalid input! Please enter a numeric SMTP port.${RESET}"
+    fi
+done
+
+while true; do
+    read -p $' \e[36mUse TLS? (yes/no, or press enter to skip): \e[0m' use_tls
+    case "$use_tls" in
+        [Yy][Ee][Ss]) use_tls_value=true; break ;;
+        [Nn][Oo]) use_tls_value=false; break ;;
+        "") use_tls_value=false; break ;;
+        *) echo -e "${RED}[ERROR] Please enter 'yes' or 'no'.${RESET}" ;;
+    esac
+done
+
 
 if [[ "$use_tls" == "yes" ]]; then
     use_tls_value=true
@@ -168,6 +188,41 @@ fi
 echo -e "${YELLOW}[INFO] Writing configuration to config.json...${RESET}"
 cat > config.json <<EOL
 {
+    "telegram_bot_token": "$telegram_bot_token",
+    "telegram_admin_id": "$telegram_admin_id",
+    "allowed_commands": [
+        "status",
+        "restart",
+        "update",
+        "shutdown",
+        "services",
+        "disk",
+        "memory",
+        "network",
+        "exec"
+    ],
+    "system_settings": {
+        "monitor_logs": true,
+        "auto_restart_failed_services": true,
+        "max_log_entries": 100,
+        "error_threshold": 5
+    },
+    "notification_settings": {
+        "enable_telegram_notifications": true,
+        "enable_email_notifications": false,
+        "enable_desktop_notifications": false
+    },
+    "security": {
+        "allow_exec_command": true,
+        "restricted_exec_commands": [
+            "rm -rf /",
+            "shutdown -h now",
+            "reboot",
+            "dd if=/dev/zero of=/dev/sda",
+            "mkfs.ext4"
+        ],
+        "log_executed_commands": true
+    },
     "log_files": [
         "/var/log/syslog",
         "/var/log/auth.log",
@@ -207,15 +262,17 @@ cat > config.json <<EOL
         "use_tls": $use_tls_value
     },
     "discord_webhook_url": "$discord_webhook_url"
+    
 }
 EOL
 
+chmod 600 config.json
+
 echo -e "${GREEN}[SUCCESS] Configuration saved successfully.${RESET}"
-echo -e "${YELLOW}[INFO] Please restart your terminal or run: source ~/.bashrc${RESET}"
 divider
 
 echo -e "${GREEN}[SUCCESS] Setup completed successfully.${RESET}"
-echo -e "${CYAN}[INFO] Launching gptADMIN.py in 3 seconds...${RESET}"
+echo -e "${CYAN}[INFO] Launching moonlit.py in 3 seconds...${RESET}"
 sleep 3
 
-python3 gptADMIN.py
+python3 moonlit.py
