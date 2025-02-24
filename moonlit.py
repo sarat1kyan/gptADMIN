@@ -39,15 +39,16 @@ with open('config.json') as f:
 
 TELEGRAM_BOT_TOKEN = config["telegram_bot_token"]
 TELEGRAM_ADMIN_ID = str(config["telegram_admin_id"])
-ALLOWED_COMMANDS = config.get("allowed_commands", [])
 LOG_FILE = "/var/log/MoonLit_commands.log"
+
+ALLOWED_COMMANDS = ["status", "restart", "update", "shutdown", "services", "disk", "memory", "network", "exec"]
 
 bot = telebot.TeleBot(TELEGRAM_BOT_TOKEN)
 
 def execute_command(command):
     try:
         logging.info(f"Executing command: {command}")
-        
+
         if command == "status":
             output = subprocess.run("uptime", shell=True, capture_output=True, text=True)
         elif command == "restart":
@@ -76,44 +77,47 @@ def execute_command(command):
         return f"❌ Error executing {command}: {e}"
 
 @bot.message_handler(commands=['start'])
-def start_telegram_bot():
-    """Starts the Telegram bot in a separate thread."""
-    @bot.message_handler(commands=['start'])
-    def send_welcome(message):
-        bot.reply_to(message, "🤖 GPTAdmin Bot is running!\nUse /help for available commands.")
+def send_welcome(message):
+    logging.debug(f"Received /start from {message.chat.id}")
+    bot.reply_to(message, "🤖 GPTAdmin Bot is running! Use /help for available commands.")
 
-    @bot.message_handler(commands=['help'])
-    def send_help(message):
-        bot.reply_to(message, "📌 Available Commands:\n"
-                              "/status - Check system uptime\n"
-                              "/restart - Restart server\n"
-                              "/update - Update system\n"
-                              "/shutdown - Shutdown server\n"
-                              "/exec <command> - Run custom command")
+@bot.message_handler(commands=['help'])
+def send_help(message):
+    logging.debug(f"Received /help from {message.chat.id}")
+    bot.reply_to(message, "📌 Available Commands:\n"
+                          "/status - Check system uptime\n"
+                          "/restart - Restart server\n"
+                          "/update - Update system\n"
+                          "/shutdown - Shutdown server\n"
+                          "/services - List running services\n"
+                          "/disk - Show disk usage\n"
+                          "/memory - Show memory usage\n"
+                          "/network - Show network info\n"
+                          "/exec <command> - Run custom command")
 
-    @bot.message_handler(commands=['exec'])
-    def execute_custom_command(message):
-        """Allows the admin to execute any Linux command."""
-        user_id = str(message.chat.id)
+@bot.message_handler(commands=['exec'])
+def execute_custom_command(message):
+    user_id = str(message.chat.id)
 
-        if user_id != TELEGRAM_ADMIN_ID:
-            bot.reply_to(message, "🚫 You are not authorized to run this command.")
-            return
+    if user_id != TELEGRAM_ADMIN_ID:
+        bot.reply_to(message, "🚫 You are not authorized to run this command.")
+        return
 
-        command = message.text.replace("/exec", "").strip()
-        if not command:
-            bot.reply_to(message, "❌ Please provide a command to execute. Example:\n/exec ls -lah")
-            return
+    command = message.text.replace("/exec", "").strip()
+    if not command:
+        bot.reply_to(message, "❌ Please provide a command to execute. Example:\n/exec ls -lah")
+        return
 
-        try:
-            output = subprocess.run(command, shell=True, capture_output=True, text=True)
-            result = output.stdout if output.stdout else output.stderr
-            bot.reply_to(message, f"✅ Command executed:\n```{result[:1900]}```")  # Telegram message limit
-        except Exception as e:
-            bot.reply_to(message, f"❌ Error executing command: {e}")
+    try:
+        output = subprocess.run(command, shell=True, capture_output=True, text=True)
+        result = output.stdout if output.stdout else output.stderr
+        bot.reply_to(message, f"✅ Command executed:\n```{result[:1900]}```")  # Telegram message limit
+    except Exception as e:
+        bot.reply_to(message, f"❌ Error executing command: {e}")
 
-@bot.message_handler(func=lambda message: True)
+@bot.message_handler(func=lambda message: message.text.startswith('/'))
 def handle_command(message):
+    """Handles predefined system commands."""
     user_id = str(message.chat.id)
 
     if user_id != TELEGRAM_ADMIN_ID:
@@ -127,7 +131,8 @@ def handle_command(message):
     else:
         bot.reply_to(message, "❌ Invalid command. Use /help for available commands.")
 
-bot.polling()
+logging.debug("Starting Telegram bot...")
+bot.polling(none_stop=True)
 
 def is_headless():
     return not os.getenv("DISPLAY") and not os.getenv("DBUS_SESSION_BUS_ADDRESS")
@@ -205,26 +210,6 @@ def display_menu():
     choice = Prompt.ask("Select an option", choices=["1", "2", "3", "4", "5", "6", "7"], default="7")
     return choice
 
-#def monitor_logs():
-#    console.print(Panel("AI Assistant is monitoring the system...", title="AI Assistant"))
-#    try:
-#        while True:
-#            for log_file in log_files:
-#                try:
-#                    with open(log_file, 'r') as f:
-#                        logs = f.readlines()
-#
-#                    error_pattern = re.compile(r'(.*error.*)', re.IGNORECASE)
-#                    matches = error_pattern.findall("".join(logs))
-#                    for error in matches:
-#                        classify_and_handle_error(error, log_file)
-#                except FileNotFoundError:
-#                    console.print(f"[yellow]Warning: {log_file} not found.[/yellow]")
-#
-#            time.sleep(60)
-#    except KeyboardInterrupt:
-#        console.print("[bold red]Stopping AI Assistant.[/bold red]")
-
 def monitor_logs():
     console.print(Panel("AI Assistant is monitoring the system...", title="AI Assistant"))
     try:
@@ -269,10 +254,6 @@ def send_desktop_notification(severity, message):
         except FileNotFoundError:
             print(f"Notification failed: No GUI or notify-send available.")
             
-#        n = notify2.Notification("Critical Error Detected", message, "dialog-warning")
-#        n.set_urgency(notify2.URGENCY_CRITICAL)
-#        n.show()
-
 def get_journalctl_logs():
     try:
         result = subprocess.run(
