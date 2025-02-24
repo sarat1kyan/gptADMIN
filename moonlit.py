@@ -126,8 +126,12 @@ def handle_command(message):
     else:
         bot.reply_to(message, "❌ Invalid command. Use /help for available commands.")
 
+def start_telegram_bot():
+    """Starts the Telegram bot in a separate thread when the user selects it."""
+    console.print("[green]✅ Telegram bot is now running! Send commands in Telegram.[/green]")
+    bot.polling(none_stop=True)
+
 logging.debug("Starting Telegram bot...")
-bot.polling(none_stop=True)
 
 def is_headless():
     return not os.getenv("DISPLAY") and not os.getenv("DBUS_SESSION_BUS_ADDRESS")
