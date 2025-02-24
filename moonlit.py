@@ -173,7 +173,10 @@ def send_help(message):
     )
 
     bot.send_message(message.chat.id, help_text, parse_mode="MarkdownV2")
-    
+
+def escape_markdown_v2(text):
+    return re.sub(r'([_*\[\]()~`>#+-=|{}.!])', r'\\\1', text)
+
 @bot.message_handler(func=lambda message: True)
 def handle_keyboard_buttons(message):
     user_id = str(message.chat.id)
@@ -205,7 +208,7 @@ def handle_keyboard_buttons(message):
         response = execute_command(command)
         bot.send_message(message.chat.id, response, parse_mode="MarkdownV2")
     else:
-        bot.reply_to(message, "❌ *Invalid command.* Use the buttons below or `/help`.", parse_mode="MarkdownV2")
+        bot.reply_to(message, escape_markdown_v2("❌ Invalid command. Use the buttons below or /help."), parse_mode="MarkdownV2")
         
 @bot.callback_query_handler(func=lambda call: True)
 def handle_callback(call):
@@ -235,7 +238,7 @@ def execute_custom_command(message):
     try:
         output = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=5)
         result = output.stdout if output.stdout else output.stderr
-        escaped_result = re.sub(r'([_*\[\]()~`>#+-=|{}.!])', r'\\\1', result[:1900])  # Escape special MarkdownV2 characters
+        escaped_result = escape_markdown_v2(result[:1900])
         bot.reply_to(message, f"✅ *Command Executed:*\n```\n{escaped_result}\n```", parse_mode="MarkdownV2")
     except Exception as e:
         bot.reply_to(message, f"❌ *Error executing command:* `{e}`")
