@@ -228,7 +228,7 @@ def execute_custom_command(message):
     user_id = str(message.chat.id)
 
     if user_id != TELEGRAM_ADMIN_ID:
-        bot.reply_to(message, "🚫 You are not authorized to run this command.")
+        bot.reply_to(message, "🚫 *You are not authorized to run this command.*", parse_mode="MarkdownV2")
         return
 
     command = message.text.replace("/exec", "").strip()
@@ -237,28 +237,33 @@ def execute_custom_command(message):
         return
 
     try:
-        output = subprocess.run(command, shell=True, capture_output=True, text=True)
+        output = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=5)
         result = output.stdout if output.stdout else output.stderr
-        bot.reply_to(message, f"✅ *Command Executed:*\n```\n{result[:1900]}\n```", parse_mode="MarkdownV2")
+        escaped_result = escape_markdown_v2(result[:1900])  # Escape MarkdownV2
+
+        bot.reply_to(message, f"✅ *Command Executed:*\n```\n{escaped_result}\n```", parse_mode="MarkdownV2")
+    except subprocess.TimeoutExpired:
+        bot.reply_to(message, "❌ *Command timed out after 5 seconds.*", parse_mode="MarkdownV2")
     except Exception as e:
-        bot.reply_to(message, f"❌ *Error executing command:* `{e}`")
-        
-@bot.message_handler(func=lambda message: message.text.startswith('/'))
+        bot.reply_to(message, f"❌ *Error executing command:* `{escape_markdown_v2(str(e))}`", parse_mode="MarkdownV2")
+
+
+@bot.message_handler(func=lambda message: message.text.startswith('/') and not message.text.startswith('/exec'))
 def handle_command(message):
-    """Handles predefined system commands."""
+    """Handles predefined system commands (except /exec)."""
     user_id = str(message.chat.id)
 
     if user_id != TELEGRAM_ADMIN_ID:
-        bot.reply_to(message, "🚫 You are not authorized to run this command.")
+        bot.reply_to(message, "🚫 *You are not authorized to run this command.*", parse_mode="MarkdownV2")
         return
 
     command = message.text.lstrip("/")
     if command in ALLOWED_COMMANDS:
         response = execute_command(command)
-        bot.reply_to(message, response)
+        bot.reply_to(message, response, parse_mode="MarkdownV2")
     else:
-        bot.reply_to(message, "❌ Invalid command. Use /help for available commands.")
-
+        bot.reply_to(message, "❌ *Invalid command.* Use `/help` for available commands.", parse_mode="MarkdownV2")
+        
 def start_telegram_bot():
     """Starts the Telegram bot in a separate thread when the user selects it."""
     console.print("[green]✅ Telegram bot is now running! Send commands in Telegram.[/green]")
