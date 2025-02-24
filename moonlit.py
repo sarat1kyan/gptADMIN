@@ -184,7 +184,7 @@ def handle_keyboard_buttons(message):
         return
 
     if message.text.startswith("/exec"):
-        execute_custom_command(message)  # Call the function that handles /exec
+        execute_custom_command(message) 
         return
 
     command_map = {
@@ -274,10 +274,14 @@ def execute_custom_command(message):
         bot.reply_to(message, "❌ *Please provide a command to execute.*\nExample:\n`/exec ls -lah`", parse_mode="MarkdownV2")
         return
 
+    # Prevent execution of restricted commands
     for restricted in RESTRICTED_COMMANDS:
         if restricted in command:
             bot.reply_to(message, f"⚠️ *Command is blocked for security reasons:* `{restricted}`", parse_mode="MarkdownV2")
             return
+
+    if command.startswith("ping"):
+        command = command + " -c 4" 
 
     try:
         output = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=10)
@@ -290,7 +294,6 @@ def execute_custom_command(message):
 
         response_message = f"✅ *Command Executed:*\n```\n{escaped_result[:1900]}\n```"
 
-        # Send result as text or a file if too long
         if len(escaped_result) > 1900:
             log_filename = f"command_output_{int(time.time())}.txt"
             with open(log_filename, "w") as log_file:
@@ -305,7 +308,7 @@ def execute_custom_command(message):
         bot.send_message(message.chat.id, "❌ *Command timed out after 10 seconds.*", parse_mode="MarkdownV2")
     except Exception as e:
         bot.send_message(message.chat.id, f"❌ *Error executing command:* `{escape_markdown_v2(str(e))}`", parse_mode="MarkdownV2")
-        
+
 @bot.callback_query_handler(func=lambda call: call.data.startswith("exec_run:") or call.data == "exec_cancel")
 def confirm_execution(call):
     """Handles execution confirmation and executes the command securely."""
