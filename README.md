@@ -1,12 +1,11 @@
-                                             
-             _   _____ ____  _____ _____ _____ 
-     ___ ___| |_|  _  |    \|     |     |   | |
-    | . | . |  _|     |  |  | | | |-   -| | | |
-    |_  |  _|_| |__|__|____/|_|_|_|_____|_|___|
-    |___|_|                                    
+███╗░░░███╗░█████╗░░█████╗░███╗░░██╗░⏾░██╗░░░░░██╗████████╗
+████╗░████║██╔══██╗██╔══██╗████╗░██║░░░██║░░░░░██║╚══██╔══╝
+██╔████╔██║██║░░██║██║░░██║██╔██╗██║░░░██║░░░░░██║░░░██║░░░
+██║╚██╔╝██║██║░░██║██║░░██║██║╚████║░░░██║░░░░░██║░░░██║░░░
+██║░╚═╝░██║╚█████╔╝╚█████╔╝██║░╚███║░░░███████╗██║░░░██║░░░
+╚═╝░░░░░╚═╝░╚════╝░░╚════╝░╚═╝░░╚══╝░░░╚══════╝╚═╝░░░╚═╝░░░
 
-
-# gptADMIN 2.0
+# MoonLit 3.54 Stable Stable
 
 # Sysadmin Assistant with ChatGPT 🛠️
 
@@ -29,18 +28,18 @@ Get started quickly:
     bash setup.sh
     ```
 3. The setup script will prompt you to enter your OpenAI API key. Make sure to have an OpenAI account and generate an API key.
-4. The Alarming system has been added woth Update 2.0 so now you can get updates and alarms to your email or Discord channel using the webhook.
+4. The Alarming system has been added woth Update 3.54 Stable Stable so now you can get updates and alarms to your email or Discord channel using the webhook.
 4.1 If you prefer use this tool without the alarming system just write NULL for email settings.
    
 ## 💡 Usage
 
 1. Once setup is complete, run the main script using:
     ```bash
-    python3 gptADMIN.py
+    python3 MoonLit.py
     ```
 2. The script will proactively monitor system logs for errors.
 3. When an error is detected, initiate a ChatGPT session for in-depth troubleshooting.
-4. Now with Update 2.0 you also can perform system diagnostics
+4. Now with Update 3.54 Stable Stable you also can perform system diagnostics
 5. Exit the chat session by typing 'exit' or 'quit'.
 6. Stop the Sysadmin Assistant with Ctrl+C.
 
