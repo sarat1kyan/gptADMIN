@@ -155,9 +155,8 @@ source ~/.bashrc
 read -p $' \e[36mEnter your Discord Webhook URL (optional, press enter to skip): \e[0m' discord_webhook_url
 read -p $' \e[36mEnter your Telegram Bot Token (optional, press enter to skip): \e[0m' telegram_bot_token
 read -p $' \e[36mEnter your Telegram Admin ID (optional, press enter to skip): \e[0m' telegram_admin_id
-read -p $' \e[36mEnter your email (used for alerts) (optional, write NULL to skip): \e[0m' admin_email
-read -p $' \e[36mEnter your email (used for alerts) (optional, press enter to skip): \e[0m' admin_email
-read -p $' \e[36mEnter your SMTP server (e.g., smtp.gmail.com) (optional, press enter to skip): \e[0m' smtp_server
+read -p $' \e[36mEnter your email (used for alerts) (optional, write NULL or press enter to skip): \e[0m' admin_email
+read -p $' \e[36mEnter your SMTP server (e.g., smtp.gmail.com) (optional, write NULL or press enter to skip): \e[0m' smtp_server
 
 while true; do
     read -p $' \e[36mEnter your SMTP port (e.g., 587 for TLS, 465 for SSL, or 0 to skip): \e[0m' smtp_port
