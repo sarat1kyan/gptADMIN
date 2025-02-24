@@ -84,14 +84,14 @@ def send_welcome(message):
         return
 
     welcome_text = (
-        "🌙 *Welcome to MoonLit Admin Bot\\!* \\n\\n"
-        "🔧 *Your personal system administrator in Telegram\\!* 🚀\\n"
-        "💡 *Control your server securely from anywhere\\.*\\n\\n"
-        "📌 *Features:* \\n"
-        "✅ System Monitoring \\n"
-        "✅ Server Control \\n"
-        "✅ Log Checking \\n"
-        "✅ Custom Command Execution \\n\\n"
+        "🌙 *Welcome to MoonLit Admin Bot\\!* \n\n"
+        "🔧 *Your personal system administrator in Telegram\\!* 🚀\n"
+        "💡 *Control your server securely from anywhere\\.*\n\n"
+        "📌 *Features:* \n"
+        "✅ System Monitoring \n"
+        "✅ Server Control \n"
+        "✅ Log Checking \n"
+        "✅ Custom Command Execution \n\n"
         "Use the buttons below or type /help for more commands\\!"
     )
 
@@ -235,7 +235,8 @@ def execute_custom_command(message):
     try:
         output = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=5)
         result = output.stdout if output.stdout else output.stderr
-        bot.reply_to(message, f"✅ *Command Executed:*\n```\n{result[:1900]}\n```", parse_mode="MarkdownV2")
+        escaped_result = re.sub(r'([_*\[\]()~`>#+-=|{}.!])', r'\\\1', result[:1900])  # Escape special MarkdownV2 characters
+        bot.reply_to(message, f"✅ *Command Executed:*\n```\n{escaped_result}\n```", parse_mode="MarkdownV2")
     except Exception as e:
         bot.reply_to(message, f"❌ *Error executing command:* `{e}`")
         
