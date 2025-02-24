@@ -76,6 +76,7 @@ def execute_command(command):
 
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
+    """Sends a welcome message with a persistent keyboard."""
     logging.debug(f"Received /start from {message.chat.id}")
 
     if str(message.chat.id) != TELEGRAM_ADMIN_ID:
@@ -83,15 +84,15 @@ def send_welcome(message):
         return
 
     welcome_text = (
-        "🌙 *Welcome to MoonLit Admin Bot!*\n\n"
-        "🔧 *Your personal system administrator in Telegram\!* 🚀\n"
-        "💡 *Control your server securely from anywhere*\.\n\n"
-        "📌 *Features:* \n"
-        "✅ System Monitoring \n"
-        "✅ Server Control \n"
-        "✅ Log Checking \n"
-        "✅ Custom Command Execution \n\n"
-        "Use the buttons below or type `/help` for more commands\!"
+        "🌙 *Welcome to MoonLit Admin Bot\\!* \\n\\n"
+        "🔧 *Your personal system administrator in Telegram\\!* 🚀\\n"
+        "💡 *Control your server securely from anywhere\\.*\\n\\n"
+        "📌 *Features:* \\n"
+        "✅ System Monitoring \\n"
+        "✅ Server Control \\n"
+        "✅ Log Checking \\n"
+        "✅ Custom Command Execution \\n\\n"
+        "Use the buttons below or type /help for more commands\\!"
     )
 
     keyboard = ReplyKeyboardMarkup(resize_keyboard=True, one_time_keyboard=False)
@@ -114,6 +115,7 @@ def send_welcome(message):
     keyboard.add(KeyboardButton("ℹ️ Help"), KeyboardButton("❓ About")) 
 
     bot.send_message(message.chat.id, welcome_text, reply_markup=keyboard, parse_mode="MarkdownV2")
+    
 @bot.message_handler(commands=['help'])
 
 @bot.message_handler(commands=['about'])
