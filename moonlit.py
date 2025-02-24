@@ -137,9 +137,9 @@ def send_about(message):
         "• 🖥️ Server Control\n"
         "• 📜 Log Analysis\n"
         "• ⚡ Quick Access to Linux Commands\n\n"
-        "🔗 *Project Maintainer:* `@YourUsername`\n"
-        "🌍 *Open Source Contribution:* [GitHub Repo](https://github.com/yourrepo)\n"
-        "📞 *Support:* [Telegram Group](https://t.me/yourgroup)"
+        "🔗 *Project Maintainer:* `Mher Saratikyan`\n"
+        "🌍 *Open Source Contribution:* [GitHub Repo](https://github.com/sarat1kyan/MoonLit)\n"
+        "📞 *Support:* [Telegram Group](https://t.me/saratikyan_m)"
     )
 
     bot.send_message(message.chat.id, about_text, parse_mode="MarkdownV2", disable_web_page_preview=True)
@@ -169,8 +169,7 @@ def send_help(message):
         "❓ *Other Commands:*\n"
         "• `/help` – Show this help message ℹ️\n"
         "• `/about` – About the bot ❓\n\n"
-        "• `/start` – Restart the bot if you encounter any problems \n\n"
-        "💡 *Use the buttons below or type a command!*"
+        "💡 *Use the buttons below or type a command\\!*"
     )
 
     bot.send_message(message.chat.id, help_text, parse_mode="MarkdownV2")
