@@ -335,7 +335,7 @@ def confirm_execution(call):
     bot.edit_message_text(f"✅ *Command Executed:* `{escape_markdown_v2(command)}`", 
                           chat_id=call.message.chat.id, message_id=call.message.message_id, parse_mode="MarkdownV2")
 
-@bot.message_handler(func=lambda message: message.text.startswith('/'))
+
 def handle_command(message):
     """Handles predefined system commands securely."""
     user_id = str(message.chat.id)
@@ -355,6 +355,8 @@ def handle_command(message):
             bot.reply_to(message, f"❌ *Error executing command:* `{escape_markdown_v2(str(e))}`", parse_mode="MarkdownV2")
     else:
         bot.reply_to(message, "❌ *Invalid command.* Use `/help` for available commands.", parse_mode="MarkdownV2")
+
+@bot.message_handler(func=lambda message: message.text.startswith('/'))
 
 def send_discord_notification(title, message):
 
