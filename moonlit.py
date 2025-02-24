@@ -25,11 +25,6 @@ from email.mime.text import MIMEText
 
 console = Console()
 
-#if os.getenv("DISPLAY") or os.getenv("DBUS_SESSION_BUS_ADDRESS"):
-#    notify2.init("AI Assistant")
-#else:
-#    console.print("[yellow]Skipping notify2: No GUI detected (headless mode).[/yellow]")
-#
 logging.basicConfig(filename='assistant.log', level=logging.INFO)
 logging.basicConfig(filename='error_log.txt', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 client = openai.OpenAI() 
