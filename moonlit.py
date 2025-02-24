@@ -183,6 +183,10 @@ def handle_keyboard_buttons(message):
         bot.reply_to(message, "🚫 *You are not authorized to use this bot.*", parse_mode="MarkdownV2")
         return
 
+    if message.text.startswith("/exec"):
+        execute_custom_command(message)  # Call the function that handles /exec
+        return
+
     command_map = {
         "📊 Check Status": "status",
         "📜 List Services": "services",
@@ -338,7 +342,6 @@ def confirm_execution(call):
 
 @bot.message_handler(func=lambda message: message.text.startswith('/'))
 def handle_command(message):
-    """Handles predefined system commands securely (without invalid command error)."""
     user_id = str(message.chat.id)
 
     if user_id != TELEGRAM_ADMIN_ID:
@@ -347,7 +350,7 @@ def handle_command(message):
 
     command = message.text.lstrip("/").split()[0]  # Extract only the first part of the command
 
-    if command == "exec":  # Ensure /exec works before invalid command check
+    if command == "exec":
         return  
 
     if command in ["status", "restart", "update", "shutdown", "services", "disk", "memory", "network"]:
@@ -358,9 +361,8 @@ def handle_command(message):
         except Exception as e:
             bot.reply_to(message, f"❌ *Error executing command:* `{escape_markdown_v2(str(e))}`", parse_mode="MarkdownV2")
 
-    # 🔹 This line is **removed** temporarily:
-    # else:
-    #     bot.reply_to(message, "❌ *Invalid command.* Use `/help` for available commands.", parse_mode="MarkdownV2")
+     else:
+         bot.reply_to(message, "❌ *Invalid command.* Use `/help` for available commands.", parse_mode="MarkdownV2")
 @bot.message_handler(func=lambda message: message.text.startswith('/'))
 
 def send_discord_notification(title, message):
