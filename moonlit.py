@@ -300,21 +300,6 @@ def confirm_execution(call):
     bot.edit_message_text(f"✅ *Command Executed:* `{escape_markdown_v2(command)}`", 
                           chat_id=call.message.chat.id, message_id=call.message.message_id, parse_mode="MarkdownV2")
 
-def handle_command(message):
-    user_id = str(message.chat.id)
-
-    if user_id != TELEGRAM_ADMIN_ID:
-        bot.reply_to(message, "🚫 *You are not authorized to run this command.*", parse_mode="MarkdownV2")
-        return
-
-    command = message.text.lstrip("/")
-
-    if command in ALLOWED_COMMANDS:
-        response = execute_command(command)
-        bot.reply_to(message, response, parse_mode="MarkdownV2")
-        
-    else:
-        bot.reply_to(message, "❌ *Invalid command.* Use `/help` for available commands.", parse_mode="MarkdownV2")
         
 def start_telegram_bot():
     """Starts the Telegram bot in a separate thread when the user selects it."""
@@ -347,6 +332,23 @@ if not openai.api_key:
 
 import requests
 import json
+
+@bot.message_handler(func=lambda message: message.text.startswith('/'))
+def handle_command(message):
+    """Handles predefined system commands."""
+    user_id = str(message.chat.id)
+
+    if user_id != TELEGRAM_ADMIN_ID:
+        bot.reply_to(message, "🚫 You are not authorized to run this command.")
+        return
+
+    command = message.text.lstrip("/")
+
+    if command in ALLOWED_COMMANDS:
+        response = execute_command(command)
+        bot.reply_to(message, response)
+    else:
+        bot.reply_to(message, "❌ Invalid command. Use /help for available commands.")
 
 def send_discord_notification(title, message):
 
