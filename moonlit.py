@@ -28,8 +28,20 @@ from telebot.types import ReplyKeyboardMarkup, KeyboardButton
 
 console = Console()
 RESTRICTED_COMMANDS = ["rm -rf /", "shutdown -h now", "passwd", "dd if=/dev/zero of=/dev/sda", "mkfs.ext4", "chmod 777"]
-logging.basicConfig(filename='assistant.log', level=logging.INFO)
-logging.basicConfig(filename='error_log.txt', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+# logging.basicConfig(filename='assistant.log', level=logging.INFO)
+# logging.basicConfig(filename='error_log.txt', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(
+    filename="moonlit.log",
+    level=logging.INFO,
+    format="%(asctime)s - %(levelname)s - %(message)s"
+)
+
+def send_alert(message):
+    """Send an alert message to the admin."""
+    try:
+        bot.send_message(TELEGRAM_ADMIN_ID, f"🚨 *ALERT:*\n`{message}`", parse_mode="MarkdownV2")
+    except Exception as e:
+        logging.error(f"Failed to send alert: {e}")
 client = openai.OpenAI() 
 openai.api_key = os.getenv("OPENAI_API_KEY")
 with open('config.json') as f:
