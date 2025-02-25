@@ -30,14 +30,21 @@ console = Console()
 RESTRICTED_COMMANDS = ["rm -rf /", "shutdown -h now", "passwd", "dd if=/dev/zero of=/dev/sda", "mkfs.ext4", "chmod 777"]
 # logging.basicConfig(filename='assistant.log', level=logging.INFO)
 # logging.basicConfig(filename='error_log.txt', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+TELEGRAM_BOT_TOKEN = config["telegram_bot_token"]
+TELEGRAM_ADMIN_ID = str(config["telegram_admin_id"])
+LOG_FILE = "/var/log/MoonLit_commands.log"
+
+ALLOWED_COMMANDS = ["status", "restart", "update", "shutdown", "services", "disk", "memory", "network", "exec"]
+
+bot = telebot.TeleBot(TELEGRAM_BOT_TOKEN)
 logging.basicConfig(
     filename="moonlit.log",
     level=logging.INFO,
     format="%(asctime)s - %(levelname)s - %(message)s"
 )
 
+'''
 def send_alert(message):
-    """Send an alert message to the admin."""
     try:
         bot.send_message(TELEGRAM_ADMIN_ID, f"🚨 *ALERT:*\n`{message}`", parse_mode="MarkdownV2")
     except Exception as e:
@@ -46,15 +53,24 @@ client = openai.OpenAI()
 openai.api_key = os.getenv("OPENAI_API_KEY")
 with open('config.json') as f:
     config = json.load(f)
+'''
 
-TELEGRAM_BOT_TOKEN = config["telegram_bot_token"]
-TELEGRAM_ADMIN_ID = str(config["telegram_admin_id"])
-LOG_FILE = "/var/log/MoonLit_commands.log"
+import requests
 
-ALLOWED_COMMANDS = ["status", "restart", "update", "shutdown", "services", "disk", "memory", "network", "exec"]
+def send_alert(message):
+    
+    url = f"https://api.telegram.org/bot{TELEGRAM_BOT_TOKEN}/sendMessage"
+    data = {"chat_id": TELEGRAM_CHAT_ID, "text": message, "parse_mode": "Markdown"}
 
-bot = telebot.TeleBot(TELEGRAM_BOT_TOKEN)
-
+    try:
+        response = requests.post(url, data=data)
+        if response.status_code != 200:
+            logging.error(f"❌ Telegram API Error: {response.text}")
+        else:
+            logging.info(f"✅ Alert sent: {message}")
+    except Exception as e:
+        logging.error(f"⚠️ Failed to send alert: {e}")
+        
 def execute_command(command):
     try:
         logging.info(f"Executing command: {command}")
@@ -80,7 +96,7 @@ def execute_command(command):
         else:
             return "❌ Unknown command."
 
-        return f"✅ Command executed:\n```{output.stdout[:1900]}```"  # Telegram messages max 2000 chars
+        return f"✅ Command executed:\n```{output.stdout[:1900]}```"  
 
     except Exception as e:
         logging.error(f"Error executing {command}: {e}")
@@ -88,7 +104,6 @@ def execute_command(command):
 
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
-    """Sends a welcome message with a persistent keyboard."""
     logging.debug(f"Received /start from {message.chat.id}")
 
     if str(message.chat.id) != TELEGRAM_ADMIN_ID:
@@ -215,9 +230,9 @@ def handle_keyboard_buttons(message):
     command = command_map.get(message.text)
 
     if command == "help":
-        send_help(message)  # Call help function
+        send_help(message)  
     elif command == "about":
-        send_about(message)  # Call about function
+        send_about(message)  
     elif command in ["status", "restart", "update", "shutdown", "services", "disk", "memory", "network"]:
         response = execute_command(command)
         bot.send_message(message.chat.id, response, parse_mode="MarkdownV2")
@@ -235,11 +250,8 @@ def handle_callback(call):
     command = call.data
     response = execute_command(command)
     bot.send_message(call.message.chat.id, response)
-
-
         
 def start_telegram_bot():
-    """Starts the Telegram bot in a separate thread when the user selects it."""
     console.print("[green]✅ Telegram bot is now running! Send commands in Telegram.[/green]")
     bot.polling(none_stop=True)
 
@@ -249,7 +261,7 @@ def is_headless():
     return not os.getenv("DISPLAY") and not os.getenv("DBUS_SESSION_BUS_ADDRESS")
 
 if is_headless():
-    console.print("[yellow]Skipping notify2: No GUI detected (headless mode).[/yellow]")
+    console.print("[yellow]Functionality check completed[/yellow]")
 else:
     try:
         notify2.init("AI Assistant")
