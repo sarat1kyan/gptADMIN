@@ -268,23 +268,28 @@ EOL
 chmod 600 config.json
 
 echo -e "${GREEN}[SUCCESS] Configuration saved successfully.${RESET}"
+
 divider
+sleep 3
 
 echo -e "${GREEN}[SUCCESS] Setup completed successfully.${RESET}"
-echo -e "${CYAN}[INFO] Launching moonlit.py in 3 seconds...${RESET}"
-sleep 3
+divider
+sleep 2
 
 read -p $' \e[36mDo you want to start the alerting system? (yes/no): \e[0m' user_agree
 if [[ "$user_agree" != "yes" ]]; then
     echo -e "${RED}[ABORTED] You will not receive ALERTS about new logs and events.${RESET}"
 fi
 
-nohup python3 log_watcher.py &
+nohup python3 moonlit-log-watcher.py &
 
 divider
 
 echo -e "${GREEN}[SUCCESS] The ALERTING system has been launched.${RESET}"
 
 divider
+
+echo -e "${CYAN}[INFO] Launching moonlit.py in 3 seconds...${RESET}"
+sleep 3
 
 python3 moonlit.py
