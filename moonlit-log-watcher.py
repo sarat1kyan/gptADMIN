@@ -2,6 +2,8 @@ import time
 import os
 import re
 import logging
+import threading
+import subprocess
 from moonlit import send_alert 
 
 logging.basicConfig(
@@ -90,6 +92,21 @@ ALERT_KEYWORDS = [
 
 recent_alerts = {}
 
+def monitor_journal():
+    process = subprocess.Popen(
+        ["journalctl", "-f", "-o", "cat"],  # Follow logs, raw output
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        text=True
+    )
+
+    for line in iter(process.stdout.readline, ''):
+        for keyword in ALERT_KEYWORDS:
+            if re.search(rf"\b{keyword}\b", line, re.IGNORECASE):
+                logging.warning(f"🛑 JOURNAL ALERT: {line.strip()}")
+                send_unique_alert(line.strip())  # Send Telegram alert
+                break
+                
 def send_unique_alert(message):
     global recent_alerts
     if message in recent_alerts:
@@ -121,11 +138,15 @@ def tail_file(filename):
         logging.error(f"Failed to read {filename}: {e}")
 
 if __name__ == "__main__":
+    threading.Thread(target=monitor_journal, daemon=True).start()
     logging.info("🔍 Log monitoring started...")
 
     for log_file in LOG_FILES:
         if os.path.exists(log_file):
-            logging.info(f"Monitoring {log_file} for alerts...")
-            tail_file(log_file)
+            logging.info(f"✅ Monitoring {log_file} for alerts...")
+            threading.Thread(target=tail_file, args=(log_file,), daemon=True).start()
         else:
             logging.warning(f"⚠️ Log file not found: {log_file}")
+
+    while True:
+        time.sleep(10)  # Keep the script running
